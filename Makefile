@@ -7,6 +7,9 @@ OBJECTS = Game.o MineFieldFilters.o minesweeper.o PlayerHuman.o PlayerRobot.o PT
 all: $(OBJECTS)
 	g++ $(OPTS) $(OBJECTS) -o minesweeper
 
+clean:
+	rm -v $(OBJECTS) minesweeper || true
+
 ai4d:
 	@echo Running a minesweeper example: AI in 4D
 	./minesweeper 9 4 8 4 --ai -F
