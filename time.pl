@@ -2,40 +2,31 @@
 
 use warnings;
 use strict;
-use List::Util 'reduce';
+use List::Util 'sum';
+use Time::HiRes qw(gettimeofday tv_interval);
 
 sub addtime {
-	my ($dim, $mines) = @_;
-	my $cmd;
-	if (defined $mines) {
-		$mines = "--mines $mines";
-	} else {
-		$mines = '';
-	}
-	{	local $, = ' ';
-		$cmd = "/usr/bin/time ./minesweeper --ai @$dim $mines 2>&1 >/dev/null";
-	}
+	my ($args) = @_;
+	my $cmd = "/usr/bin/time ./minesweeper --ai $args 2>&1 >/dev/null";
 	my $output = qx($cmd);
 	chomp $output;
 	my $time;
 	if ($output =~ /(?|(\d+\.\d+)(?:s\s+)?user|user\s+(\d+m\d+\.\d+))/) {
 		$time = $1;
+	} else {
+		print STDERR "Couldn't parse: $output\n";
+		return;
 	}
-	$time //= 'unknown';
-	print "dim: @$dim mines: $mines time: $time\n";
-	return ($dim, $mines, $time);
+	return $time;
 }
 
-my %runs = ();
-for my $i (1..3) {
-	for my $y (1..10) {
-		for my $x ($y..10) {
-			my $xx = $x*5;
-			my $yy = $y*5;
-			my $product = $xx*$yy;
-			if (!exists $runs{$product}) {$runs{$product} = [];}
-			my (undef, 
-			push @{$runs{$product}}, addtim
-		}
+my $size = 1;
+while (1) {
+	my $start = [gettimeofday];
+	my @runtimes;
+	while (tv_interval($start, [gettimeofday]) < 1 or @runtimes < 5) {
+		push @runtimes, addtime "$size $size";
 	}
+	print $size,'x',$size,' ',sum(@runtimes),'/',scalar(@runtimes),' = ',sum(@runtimes)/@runtimes,"\n";
+	++$size;
 }
