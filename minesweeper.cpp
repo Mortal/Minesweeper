@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <ncurses.h>
 
 #define START(mines) Game field(size.size(), size, timer); field.startgame(mines);
 #define DIM(i) size.push_back(i)
@@ -131,18 +132,34 @@ int main(int argc, char* argv[])
 		player = new PlayerHuman(&field);
 	}
 	timer->endtime("Create player");
+
+	initscr();
+	start_color();
+	init_pair(1, COLOR_RED, COLOR_BLACK); // flags and blown mines
+	init_pair(2, COLOR_CYAN, COLOR_BLACK); // unpressed tiles
+	init_pair(3, COLOR_WHITE, COLOR_BLACK); // pressed tiles
+
 	timer->starttime("Play");
 	player->play();
 	timer->endtime("Play");
-	if (field.getState() == GAMESTATE_LOSE) std::cerr << "Game lost!" << std::endl;
-	else if (field.getState() == GAMESTATE_WIN) std::cerr << "Congratulations!" << std::endl;
+	{
+		const char *msg = "";
+		if (field.getState() == GAMESTATE_LOSE) msg = "Game lost!";
+		else if (field.getState() == GAMESTATE_WIN) msg = "Congratulations!";
+		if (opts.waitonquit) {
+			printw("%s\n", msg);
+			refresh();
+			getch();
+			endwin();
+		} else {
+			endwin();
+			std::cout << msg << std::endl;
+		}
+	}
 	timer->output();
 	delete player;
 	delete opts.timer;
 	opts.timer = NULL;
-	if (opts.waitonquit) {
-		std::cin.ignore(0xFFFF, '\n');
-	}
 	return 0;
 }
 

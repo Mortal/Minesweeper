@@ -24,7 +24,7 @@ public:
 	PTileVector::const_iterator tileend();
 	Tile *getTile(CoordinateSet pos);
 	void startgame(int mines);
-	void output(std::ostream *fp);
+	void output();
 	bool amIDeadNow(CoordinateSet pos);
 	bool flagon(CoordinateSet pos);
 	bool flagoff(CoordinateSet pos);
@@ -35,8 +35,7 @@ public:
 	unsigned int totalFlags();
 	unsigned int getPressedCount() {return this->pressedcount;}
 	unsigned int getTileCount() {return this->tilecount;}
-	void back_up(std::ostream *fp);
-	void one_down(std::ostream *fp);
+	void one_down();
 private:
 	NullTimer *timer;
 	Dimension dimensioncount;
@@ -52,8 +51,8 @@ private:
 	unsigned int pressedcount;
 	unsigned int coordstofieldindex(CoordinateSet pos);
 	CoordinateSet fieldindextocoords(unsigned int idx);
-	void outputrow(std::ostream *fp, Dimension dim, CoordinateSet basis, ColourHandler *col);
-	void outputdimensions(std::ostream *fp, Dimension dim, CoordinateSet basis, ColourHandler *col);
+	void outputrow(Dimension dim, CoordinateSet basis);
+	void outputdimensions(Dimension dim, CoordinateSet basis);
 	int linecount;
 	void deploythemines(int);
 	void filltheblanks();

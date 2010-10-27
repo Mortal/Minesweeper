@@ -54,7 +54,7 @@ PlayerHuman::PlayerHuman(Game *field) {
 
 void PlayerHuman::play() {
 	while (1) {
-		this->field->output(&std::cout);
+		this->field->output();
 		std::string inputstring;
 		std::cin >> inputstring;
 		HumanCoordinateInput input(inputstring, field->getDimensioncount());
@@ -67,7 +67,7 @@ void PlayerHuman::play() {
 }
 
 void PlayerHuman::dead() {
-	this->field->output(&std::cout);
+	this->field->output();
 	std::cout << "A strange game. The only winning move is not to play. "
 		"Do you want your possessions identified? [ynq]" << std::endl;
 	std::cin.ignore(0xFFFF, '\n');

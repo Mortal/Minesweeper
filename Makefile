@@ -5,7 +5,7 @@ OPTS=-Wall -O3
 
 OBJECTS = Game.o MineFieldFilters.o minesweeper.o PlayerHuman.o PlayerRobot.o PTileSetOperations.o test.o Tile.o Timer.o t_PTileSetOperations.o ColourHandler.o
 all: $(OBJECTS)
-	g++ $(OPTS) $(OBJECTS) -o minesweeper
+	g++ $(OPTS) -lncurses $(OBJECTS) -o minesweeper
 
 clean:
 	rm -v $(OBJECTS) minesweeper || true

@@ -7,6 +7,7 @@
 #include <string>
 #include <cassert>
 #include "Timer.h"
+#include <ncurses.h>
 
 PlayerRobot::PlayerRobot(Game *field, ProgramOptions opts, NullTimer *timer):
 timer(timer), field(field), croaking(false), opts(opts) {
@@ -19,6 +20,7 @@ PlayerRobot::~PlayerRobot() {
 }
 
 void PlayerRobot::ncroak(std::string msg) {
+	/*
 	if (!opts.verbose) return;
 	if (!this->croaking) {
 		std::cout << "BOT: ";
@@ -26,13 +28,17 @@ void PlayerRobot::ncroak(std::string msg) {
 		this->croaking = true;
 	}
 	std::cout << msg;
+	*/
 }
 void PlayerRobot::croak(std::string msg) {
+	/*
 	if (!opts.verbose) return;
 	this->ncroak(msg);
 	this->croakend();
+	*/
 }
 void PlayerRobot::croak(std::string msg, CoordinateSet a, CoordinateSet b) {
+	/*
 	if (!opts.verbose) return;
 	this->ncroak(msg);
 	std::cout << ' ';
@@ -56,34 +62,35 @@ void PlayerRobot::croak(std::string msg, CoordinateSet a, CoordinateSet b) {
 		}
 	}
 	this->croakend();
+	*/
 }
 void PlayerRobot::croakend() {
+	/*
 	if (!opts.verbose) return;
 	if (this->croaking) {
 		this->field->one_down(&std::cout);
 		this->croaking = false;
 	}
+	*/
 }
 void PlayerRobot::croakstatus() {
+	/*
 	if (!opts.verbose) return;
 	std::cout << this->field->totalFlags() << "/" << this->field->totalMines() << ", "
 		<< (this->field->totalFlags() + this->field->getPressedCount()) << "/"
 		<< this->field->getTileCount() << " ";
+	*/
 }
 
 void PlayerRobot::play() {
-	this->field->output(&std::cout);
+	this->field->output();
 	while (this->field->getState() == GAMESTATE_PLAY) {
 		if (!this->tick()) {
 			break;
 		}
 	}
-	if (this->opts.fieldoutput) {
-		std::cout << "-";
-		this->field->one_down(&std::cout);
-	}
 
-	this->field->output(&std::cout);
+	this->field->output();
 	if (this->field->getState() == GAMESTATE_WIN) {
 		this->croak("I am victorious.");
 	} else if (this->field->getState() == GAMESTATE_LOSE) {
@@ -111,14 +118,18 @@ bool PlayerRobot::tick() {
 			checkfirst.pop();
 		}
 		if (changed) {
+			/*
 			if (this->fieldfile.is_open()) {
 				this->fieldfile.seekp(0);
 				this->field->output(&this->fieldfile);
 			}
+			*/
 			if (this->opts.fieldoutput) {
+				/*
 				std::cout << "-";
 				this->field->one_down(&std::cout);
-				this->field->output(&std::cout);
+				*/
+				this->field->output();
 			}
 			changed = false;
 		}

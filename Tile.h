@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include <ostream>
+#include <ncurses.h>
 
 class Tile {
 public:
@@ -11,7 +12,7 @@ public:
 	Flag getFlag();
 	void setBlarg(bool blarg);
 	bool amIDeadNow();
-	void output(std::ostream *fp, class ColourHandler *col);
+	chtype output();
 	bool getDepressed();
 	void press();
 	void setSurroundings(unsigned int);

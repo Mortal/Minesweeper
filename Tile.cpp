@@ -3,6 +3,7 @@
 #include <iostream>
 #include <ostream>
 #include "ColourHandler.h"
+#include <ncurses.h>
 
 Tile::Tile(): aroundtheworld(0), depressed(false), blarg(false), flag(false) {
 }
@@ -27,21 +28,17 @@ bool Tile::getDepressed() {
 	return this->depressed;
 }
 
-void Tile::output(std::ostream *fp, ColourHandler *col) {
+chtype Tile::output() {
 	if (this->flag) {
-		col->setcol(9);
-		*fp << '/';
+		return '/' | COLOR_PAIR(1);
 	} else if (this->depressed) {
 		if (this->blarg) {
-			col->setcol(9);
-			*fp << '@';
+			return '@' | COLOR_PAIR(2);
 		} else {
-			col->setcol(0);
-			*fp << this->aroundtheworldchar();
+			return this->aroundtheworldchar() | COLOR_PAIR(3);
 		}
 	} else {
-		col->setcol(6);
-		*fp << '.';
+		return '.' | COLOR_PAIR(2);
 	}
 }
 

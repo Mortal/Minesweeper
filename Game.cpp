@@ -9,6 +9,7 @@
 #include "Timer.h"
 #include <ostream>
 #include "ColourHandler.h"
+#include <ncurses.h>
 
 Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
 timer(timer), dimensioncount(dimensioncount), dimensions(dimensions), allpositions_initialised(false), minecount(0),
@@ -197,40 +198,20 @@ void Game::startgame(int mines) {
 	this->inittiles(mines);
 }
 
-void Game::back_up(std::ostream *fp) {
-	if (!this->linecount) return;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	COORD pos;
-	CONSOLE_SCREEN_BUFFER_INFO CSBI;
-	HANDLE consoleoutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	GetConsoleScreenBufferInfo(consoleoutput, &CSBI);
-	pos.Y = CSBI.dwCursorPosition.Y-this->linecount;
-	pos.X = 0;
-	SetConsoleCursorPosition(consoleoutput, pos);
-	this->linecount = 0;
-#else
-	while (this->linecount > 0) {
-		--this->linecount;
-		*fp << "\033[A";
-	}
-#endif
+void Game::one_down() {
+	printw("\n");
 }
 
-void Game::one_down(std::ostream *fp) {
-	++this->linecount;
-	*fp << std::endl;
-}
-
-void Game::output(std::ostream *fp) {
+void Game::output() {
 	TIMERON;
 	CoordinateSet basis = this->origo();
-	this->back_up(fp);
-	ColourHandler col(fp);
-	this->outputdimensions(fp, this->dimensioncount % 2, basis, &col);
+	this->outputdimensions(this->dimensioncount % 2, basis);
+	move(0,0);
+	refresh();
 	TIMEROFF;
 }
 
-void Game::outputrow(std::ostream *fp, Dimension dim, CoordinateSet basis, ColourHandler *col) {
+void Game::outputrow(Dimension dim, CoordinateSet basis) {
 	// we're only outputting rows on the last, third to last, etc. dimensions
 	// if we have an even number of dimensions, then the dimensions numbered
 	// {..., count-3, count-1} will all be odd
@@ -242,23 +223,24 @@ void Game::outputrow(std::ostream *fp, Dimension dim, CoordinateSet basis, Colou
 		for (Coordinate i = 0; i < this->dimensions[dim]; i++) {
 			CoordinateSet tile = basis;
 			tile[dim] = i;
-			this->getTile(tile)->output(fp, col);
+			chtype output = this->getTile(tile)->output();
+			addch(output);
 		}
 		return;
 	}
 	for (Coordinate i = 0; i < this->dimensions[dim]; ++i) {
 		if (i > 0) {
-			fp->put(' ');
+			printw(" ");
 		}
 		CoordinateSet subbasis = basis;
 		subbasis[dim] = i;
-		this->outputrow(fp, dim+2, subbasis, col);
+		this->outputrow(dim+2, subbasis);
 	}
 }
 
-void Game::outputdimensions(std::ostream *fp, Dimension dim, CoordinateSet basis, ColourHandler *col) {
+void Game::outputdimensions(Dimension dim, CoordinateSet basis) {
 	if (this->dimensioncount % 2 != dim % 2) {
-		this->outputrow(fp, dim, basis, col);
+		this->outputrow(dim, basis);
 		return;
 	}
 	if (dim == this->dimensioncount-2) { // 2-dimensional field
@@ -272,11 +254,10 @@ void Game::outputdimensions(std::ostream *fp, Dimension dim, CoordinateSet basis
 		for (Coordinate y = 0; y < this->dimensions[dim]; y++) {
 			CoordinateSet rowbasis = basis;
 			rowbasis[dim] = y;
-			this->outputrow(fp, 0, rowbasis, col);
-			this->one_down(fp);
+			this->outputrow(0, rowbasis);
+			printw("\n");
 		}
 	} else {
-		std::string blank;
 		// dn = this->dimensions[this->dimensioncount-1]:
 		// for 1 or 2 dimensions, len2 = d1
 		// for 3 or 4 dimensions,
@@ -302,14 +283,10 @@ void Game::outputdimensions(std::ostream *fp, Dimension dim, CoordinateSet basis
 			}
 		}
 		// then we substitute it into the formula (d3*d5*d7*...)*d1 + (d3*d5*d7*...) - 1
-		len = len*this->dimensions[this->dimensioncount-1]+len-1;
-		blank.resize(len, ' '); // these should all be spaces
 		for (Coordinate i = 0; i < this->dimensions[dim]; i++) {
 			CoordinateSet newbasis = basis;
 			newbasis[dim] = i;
-			this->outputdimensions(fp, dim+2, newbasis, col);
-			*fp << blank;
-			this->one_down(fp);
+			this->outputdimensions(dim+2, newbasis);
 		}
 	}
 }
