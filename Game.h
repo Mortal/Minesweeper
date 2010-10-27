@@ -5,6 +5,7 @@
 #include "Tile.h"
 #include <ostream>
 #include "ColourHandler.h"
+#include <ncurses.h>
 
 enum GameState {
 	GAMESTATE_INIT,
@@ -51,8 +52,8 @@ private:
 	unsigned int pressedcount;
 	unsigned int coordstofieldindex(CoordinateSet pos);
 	CoordinateSet fieldindextocoords(unsigned int idx);
-	void outputrow(Dimension dim, CoordinateSet basis);
-	void outputdimensions(Dimension dim, CoordinateSet basis);
+	void outputrow(WINDOW* w, Dimension dim, CoordinateSet basis);
+	void outputdimensions(WINDOW* w, Dimension dim, CoordinateSet basis);
 	int linecount;
 	void deploythemines(int);
 	void filltheblanks();
@@ -64,6 +65,7 @@ private:
 	void _allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list);
 	GameState state;
 	void press(CoordinateSet pos, bool norecursivespread = false);
+	WINDOW *window;
 };
 
 #endif

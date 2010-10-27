@@ -13,7 +13,7 @@
 
 Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
 timer(timer), dimensioncount(dimensioncount), dimensions(dimensions), allpositions_initialised(false), minecount(0),
-flagcount(0), pressedcount(0), linecount(0), state(GAMESTATE_INIT) {
+flagcount(0), pressedcount(0), linecount(0), state(GAMESTATE_INIT), window(stdscr) {
 	assert(dimensions.size() == dimensioncount);
 	assert(dimensioncount > 0);
 	this->inittiles(0);
@@ -205,13 +205,13 @@ void Game::one_down() {
 void Game::output() {
 	TIMERON;
 	CoordinateSet basis = this->origo();
-	this->outputdimensions(this->dimensioncount % 2, basis);
+	this->outputdimensions(window, this->dimensioncount % 2, basis);
 	move(0,0);
 	refresh();
 	TIMEROFF;
 }
 
-void Game::outputrow(Dimension dim, CoordinateSet basis) {
+void Game::outputrow(WINDOW* w, Dimension dim, CoordinateSet basis) {
 	// we're only outputting rows on the last, third to last, etc. dimensions
 	// if we have an even number of dimensions, then the dimensions numbered
 	// {..., count-3, count-1} will all be odd
@@ -234,13 +234,13 @@ void Game::outputrow(Dimension dim, CoordinateSet basis) {
 		}
 		CoordinateSet subbasis = basis;
 		subbasis[dim] = i;
-		this->outputrow(dim+2, subbasis);
+		this->outputrow(w, dim+2, subbasis);
 	}
 }
 
-void Game::outputdimensions(Dimension dim, CoordinateSet basis) {
+void Game::outputdimensions(WINDOW *w, Dimension dim, CoordinateSet basis) {
 	if (this->dimensioncount % 2 != dim % 2) {
-		this->outputrow(dim, basis);
+		this->outputrow(w, dim, basis);
 		return;
 	}
 	if (dim == this->dimensioncount-2) { // 2-dimensional field
@@ -254,39 +254,14 @@ void Game::outputdimensions(Dimension dim, CoordinateSet basis) {
 		for (Coordinate y = 0; y < this->dimensions[dim]; y++) {
 			CoordinateSet rowbasis = basis;
 			rowbasis[dim] = y;
-			this->outputrow(0, rowbasis);
+			this->outputrow(w, 0, rowbasis);
 			printw("\n");
 		}
 	} else {
-		// dn = this->dimensions[this->dimensioncount-1]:
-		// for 1 or 2 dimensions, len2 = d1
-		// for 3 or 4 dimensions,
-		// len4 = d3*d1   each row output for each outer dimension
-		//      + d3-1    a space is output for each outer dimension except the first
-		// for 5 or 6 dimensions,
-		// len6 = d5*len4 each subiteration is output for each outer dimension
-		//      + d5-1    plus a space for each except the first iteration
-		//      = d5*d3*d1 + d5*d3-d5 + d5-1 = d5*d3*d1 + d5*d3 - 1
-		// for 7 or 8 dimensions,
-		// len8 = d7*len6 yada
-		//      + d7-1    yada
-		//      = d7*d5*d3*d1 + d7*d5*d3 - 1
-		
-		// so first we calculate the common part in those two terms (d3*d5*d7*...):
-		int len = 1;
-		if (this->dimensioncount >= 3) {
-			Dimension d = this->dimensioncount-3;
-			while (true) {
-				len *= this->dimensions[d];
-				if (d >= 1) break;
-				d -= 2;
-			}
-		}
-		// then we substitute it into the formula (d3*d5*d7*...)*d1 + (d3*d5*d7*...) - 1
 		for (Coordinate i = 0; i < this->dimensions[dim]; i++) {
 			CoordinateSet newbasis = basis;
 			newbasis[dim] = i;
-			this->outputdimensions(dim+2, newbasis);
+			this->outputdimensions(w, dim+2, newbasis);
 		}
 	}
 }

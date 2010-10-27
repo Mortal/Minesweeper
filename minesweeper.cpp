@@ -4,6 +4,7 @@
 #include "PlayerHuman.h"
 #include "PlayerRobot.h"
 #include "Timer.h"
+#include "Logger.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
