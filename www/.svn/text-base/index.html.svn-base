@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style type="text/css">
+/*<![CDATA[*/
+.tile {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	background-image: url(sprite.png);
+}
+.tile0 {background-position:   0px  0px;}
+.tile1 {background-position: -16px  0px;}
+.tile2 {background-position: -32px  0px;}
+.tile3 {background-position:   0px -16px;}
+.tile4 {background-position: -16px -16px;}
+.tile5 {background-position: -32px -16px;}
+.tile6 {background-position:   0px -32px;}
+.tile7 {background-position: -16px -32px;}
+.tile8 {background-position: -32px -32px;}
+.tile9 {background-position:   0px -48px;}
+.tileflag {background-position: -16px -48px;}
+.tileunpressed {background-position: -32px -48px;}
+.frame {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+#minesweeper {
+	position: relative;
+}
+/*]]>*/
+</style>
+<script type="text/javascript" src="/js/helpers.js"></script>
+<script type="text/javascript" src="Base-min.js"></script>
+<script type="text/javascript" src="minesweeper.js"></script>
+<script type="text/javascript">
+/*<![CDATA[*/
+function img_cb(sb, s) {
+	sb.push('tile tile');
+	if (s == '0' || parseInt(s)) sb.push(s);
+	else if (s == ' ') sb.push('0');
+	else if (s == '.') sb.push('unpressed');
+	else if (s == '/') sb.push('flag');
+}
+function init() {
+	var sweep = new MineSweeper(document.getElementById('minesweeper'), img_cb);
+	sweep.imgclass = 'tile';
+	sweep.frameclass = 'frame';
+	//window.sweep = sweep;
+	tmg.xhrget_plain('minesweeper.php?dim='+escape(document.getElementById('dim').value), sweep_cb, {'sweep': sweep});
+}
+function sweep_cb(xhr) {
+	var text = xhr.responseText;
+	var sweep = xhr.localpayload.sweep;
+	text = tmg.replaceall('\r\n', '\n', text);
+	text = tmg.replaceall('\n-\n', '-', text);
+	var frames = text.split('-');
+	for (var i = 0; i < frames.length; ++i) sweep.pushFrame(frames[i]);
+	sweep.deltaficateAll();
+	var htmlsb = [];
+	sweep.drawFrames(htmlsb);
+	var html = htmlsb.join('');
+	sweep.dom.innerHTML = html;
+	play();
+}
+var prevframe = null;
+function nextdomframe() {
+	if (prevframe) return prevframe = prevframe.nextSibling;
+	else return prevframe = document.getElementById('minesweeper').childNodes[0];
+}
+function advance() {
+	var next = nextdomframe();
+	while (next != null && !next.style) next = nextdomframe();
+	if (!next) {
+		advanceinterval.stop();
+		return;
+	}
+	next.style.display = 'block';
+}
+function Interval(fn, ms) {
+	this.fn = fn;
+	this.ms = ms;
+	this.started = false;
+}
+Interval.prototype.stop = function () {
+	if (this.started) {
+		clearInterval(this.timer);
+		this.timer = null;
+		this.started = false;
+	}
+}
+Interval.prototype.start = function () {
+	this.stop();
+	this.timer = setInterval(this.fn, this.ms);
+	this.started = true;
+}
+var advanceinterval = new Interval(advance, 100);
+function play() {
+	var dom = document.getElementById('minesweeper');
+	for (var i = 0; i < dom.childNodes.length; ++i) {
+		var ele = dom.childNodes[i];
+		if (ele.style) ele.style.display = 'none';
+	}
+	advanceinterval.start();
+}
+/*]]>*/
+</script>
+</head>
+<body>
+<p>JavaScript to query the <a href="/websvn/wsvn/minesweeper/">Minesweeper solver on the server</a> to construct a gamefield
+and play it. Choose 2d, 3d or 4d playfield size by typing in dimensions separated by commas, and a fresh game will be retrieved.
+Be careful with big gamefields as they take long to produce (&rArr; php script timeout) and they may mess with your browser.</p>
+<p>Ambiguous cases in the Minesweeper game aren't handled by guessing yet. These could be resolved with fuzzy logic and
+probability of mine on each remaining tile, but so far only direct deduction is used. In a n-dimensional, n &gt; 2, playfield,
+a method is used that isn't usually useful in the 2D game. That algorithm is implemented in the method
+<a href="/websvn/wsvn/minesweeper/PlayerRobot.cpp">PlayerRobot::act_dualcheck</a>.</p>
+<form action="javascript-required" onsubmit="init(); return false">Dimensions: <input id="dim" value="20,15" /><br />
+<input type="submit" value="Play" /></form>
+<div id="minesweeper"></div>
+</body>
+</html>
