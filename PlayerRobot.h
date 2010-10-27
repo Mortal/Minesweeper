@@ -26,6 +26,7 @@ private:
 	bool croaking;
 	void ncroak(std::string msg);
 	void croak(std::string msg);
+	void croak(std::string msg, CoordinateSet a, CoordinateSet b);
 	void croakend();
 	void croakstatus();
 	ProgramOptions opts;

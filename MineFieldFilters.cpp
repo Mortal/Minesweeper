@@ -10,11 +10,15 @@ CoordinateSetList MineFieldFilter::filter(CoordinateSetList list, Game *field) {
 	}
 	return result;
 }
+
+/* A field is a "bomb neighbor" if it has a positive number on its face. */
 bool MineFieldFilterBombNeighbours::filter_cb(CoordinateSet coords, Game *field) {
 	Tile *tile = field->getTile(coords);
 	if (tile == NULL) return false;
+	/* The tile must be pressed, not be a mine, and have a positive "surroundings" */
 	return (tile->getDepressed() && !tile->amIDeadNow() && tile->getSurroundings() > 0);
 }
+
 bool MineFieldFilterUnpressed::filter_cb(CoordinateSet coords, Game *field) {
 	Tile *tile = field->getTile(coords);
 	if (tile == NULL) return false;

@@ -32,6 +32,31 @@ void PlayerRobot::croak(std::string msg) {
 	this->ncroak(msg);
 	this->croakend();
 }
+void PlayerRobot::croak(std::string msg, CoordinateSet a, CoordinateSet b) {
+	if (!opts.verbose) return;
+	this->ncroak(msg);
+	std::cout << ' ';
+	{
+		CoordinateSetIt i = a.begin();
+		while (true) {
+			std::cout << *i;
+			++i;
+			if (i == a.end()) {break;}
+			std::cout << ',';
+		}
+	}
+	std::cout << ' ';
+	{
+		CoordinateSetIt i = b.begin();
+		while (true) {
+			std::cout << *i;
+			++i;
+			if (i == b.end()) {break;}
+			std::cout << ',';
+		}
+	}
+	this->croakend();
+}
 void PlayerRobot::croakend() {
 	if (!opts.verbose) return;
 	if (this->croaking) {
@@ -170,15 +195,18 @@ bool PlayerRobot::act_safespots(CoordinateSet tile, Tile *ptile) {
 }
 
 bool PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
-	/* For each tile A (CoordinateSet tile),
-	 * check each bomb-neighbour neighbour B to see if
-	 * the unpressed, unflagged neighbours of A are a perfect
-	 * subset of the unflagged neighbours of B. In this case,
-	 * if the face value of A and B are the same, then
-	 * C = A_neighbours xor B_neighbours are all safe.
-	 * If the face value of B is higher than A, and the number
-	 * of elements in C is equal to the difference between the
-	 * face values of B and A, then C are all mines. */
+	/* A is the primary tile that has some known number of bombs as neighbors.
+	 *
+	 * For each tile B that is a neighbor of A and also has some known number of
+	 * bombs as neighbors that is at least as large as the number of A, find the
+	 * tiles that are unpressed neighbors of B but not of A. We call this list C.
+	 *
+	 * If A and B has the same number of bomb neighbors, then necessarily all the
+	 * tiles in C are safe to be pressed.
+	 *
+	 * If B has exactly as many more bomb neighbors than A as the number of tiles
+	 * in C, then necessarily all these tiles must be bombs.
+	 */
 	TIMERON;
 	CoordinateSetList tiles = this->field->neighbourhoodpositions(a);
 	MineFieldFilterBombNeighbours bfilter;
@@ -186,32 +214,51 @@ bool PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
 	MineFieldFilterLogicalDifference cfilter;
 	MineFieldFilterLogicalDifference cfilterinv;
 	if (this->timer != NULL) this->timer->starttime("MineFieldFilterBombNeighbours::filter");
+	/* find the "bomb neighbors" of the current tile */
 	CoordinateSetList bs = bfilter.filter(tiles, this->field);
 	if (this->timer != NULL) {
 		this->timer->endtime("MineFieldFilterBombNeighbours::filter");
 		this->timer->starttime("MineFieldFilterUnpressed::filter");
 	}
+
+	/* find the unpressed neighbors of the current tile */
 	CoordinateSetList a_neighbours = bombfilter.filter(tiles, this->field);
 	if (this->timer != NULL) this->timer->endtime("MineFieldFilterUnpressed::filter");
+
+	/* this filter will remove the unpressed neighbors of the current tile */
 	cfilter.set(a_neighbours);
+
 	CoordinateSetListIt biter;
 	for (biter = bs.begin(); biter != bs.end(); ++biter) {
 		CoordinateSet b = *biter;
 		Tile *pb = this->field->getTile(b);
 		assert(pb != NULL);
+
 		if (pb->getSurroundings() < pa->getSurroundings()) continue;
+		/* this tile B has as many or more neighbors than the current tile A */
+
 		if (this->timer != NULL) this->timer->starttime("MineFieldFilterUnpressed::filter");
+		/* find the unpressed neighbors of this tile */
 		CoordinateSetList b_neighbours = bombfilter.filter(this->field->neighbourhoodpositions(b), this->field);
 		if (this->timer != NULL) this->timer->endtime("MineFieldFilterUnpressed::filter");
+
 		cfilterinv.set(b_neighbours);
+
 		if (this->timer != NULL) this->timer->starttime("MineFieldFilterLogicalDifference::filter");
+		/* find the unpressed neighbors of A that are not unpressed neighbors of B */
 		CoordinateSetList subsetcheck = cfilterinv.filter(a_neighbours, this->field);
 		if (this->timer != NULL) this->timer->endtime("MineFieldFilterLogicalDifference::filter");
-		if (subsetcheck.size()) continue; // a has neighbours that b doesn't have = not subset
+
+		if (subsetcheck.size()) continue; // a has neighbours that b doesn't have, so it is not a subset
+
 		if (this->timer != NULL) this->timer->starttime("MineFieldFilterLogicalDifference::filter");
+		/* find the unpressed neighbors of B that are not unpressed neighbors of A */
 		CoordinateSetList c = cfilter.filter(b_neighbours, this->field);
 		if (this->timer != NULL) this->timer->endtime("MineFieldFilterLogicalDifference::filter");
+
 		if (!c.size()) continue;
+		// B has unpressed neighbors that A doesn't have
+
 		CoordinateSetListIt citer;
 		unsigned int unflagged = 0;
 		for (citer = c.begin(); citer != c.end(); ++citer) {
@@ -220,14 +267,16 @@ bool PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
 			if (FLAG_OFF(pc->getFlag())) ++unflagged;
 		}
 		if (!unflagged) continue;
+		// some of these unpressed neighbors are unflagged
+
 		if (pb->getSurroundings() == pa->getSurroundings()) {
 			// face values equal, the set of c are all safe
-			this->croak("Two neighbouring fields with same face values, these fields must be safe");
+			this->croak("Two neighbouring fields with same face values, these fields must be safe", a, b);
 			for (citer = c.begin(); citer != c.end(); ++citer) {
 				if (this->field->amIDeadNow(*citer)) {TIMERRET(true);}
 			}
 		} else if (pb->getSurroundings()-pa->getSurroundings() == c.size()) { // pb has larger face value than pa
-			this->croak("Two neighbouring fields with differing face values, these unknown fields must all be mines");
+			this->croak("Two neighbouring fields with differing face values, these unknown fields must all be mines", a, b);
 			CoordinateSetListIt citer;
 			for (citer = c.begin(); citer != c.end(); ++citer) {
 				this->field->flagon(*citer);
