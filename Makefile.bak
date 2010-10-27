@@ -1,7 +1,0 @@
-.cpp.o:
-	g++ -c $<
-
-OBJECTS = Game.o MineFieldFilters.o minesweeper.o PlayerHuman.o PlayerRobot.o PTileSetOperations.o test.o Tile.o Timer.o t_PTileSetOperations.o ColourHandler.o
-all: $(OBJECTS)
-	g++ $(OBJECTS) -o minesweeper
-# DO NOT DELETE
