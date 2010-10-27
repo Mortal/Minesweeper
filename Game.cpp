@@ -10,9 +10,9 @@
 #include <ostream>
 #include "ColourHandler.h"
 
-Game::Game(int dimensioncount, SizeVector dimensions, NullTimer *timer):
-dimensioncount(dimensioncount), dimensions(dimensions), state(GAMESTATE_INIT), linecount(0),
-minecount(0), flagcount(0), pressedcount(0), allpositions_initialised(false), timer(timer) {
+Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
+timer(timer), dimensioncount(dimensioncount), dimensions(dimensions), allpositions_initialised(false), minecount(0),
+flagcount(0), pressedcount(0), linecount(0), state(GAMESTATE_INIT) {
 	assert(dimensions.size() == dimensioncount);
 	assert(dimensioncount > 0);
 	this->inittiles(0);
@@ -293,8 +293,13 @@ void Game::outputdimensions(std::ostream *fp, Dimension dim, CoordinateSet basis
 		
 		// so first we calculate the common part in those two terms (d3*d5*d7*...):
 		int len = 1;
-		for (Dimension d = this->dimensioncount-3; d >= 0; d -= 2) {
-			len *= this->dimensions[d];
+		if (this->dimensioncount >= 3) {
+			Dimension d = this->dimensioncount-3;
+			while (true) {
+				len *= this->dimensions[d];
+				if (d >= 1) break;
+				d -= 2;
+			}
 		}
 		// then we substitute it into the formula (d3*d5*d7*...)*d1 + (d3*d5*d7*...) - 1
 		len = len*this->dimensions[this->dimensioncount-1]+len-1;

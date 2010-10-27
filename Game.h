@@ -15,7 +15,7 @@ enum GameState {
 
 class Game {
 public:
-	Game(int dimensioncount, SizeVector dimensions, class NullTimer *timer = NULL);
+	Game(Dimension dimensioncount, SizeVector dimensions, class NullTimer *timer = NULL);
 	CoordinateSetList neighbourhoodpositions(CoordinateSet pos, bool includeself = false);
 	PTileSet neighbourhood(CoordinateSet pos, bool includeself = false);
 	CoordinateSetList::const_iterator coordbegin();
@@ -28,7 +28,7 @@ public:
 	bool amIDeadNow(CoordinateSet pos);
 	bool flagon(CoordinateSet pos);
 	bool flagoff(CoordinateSet pos);
-	int getDimensioncount() {return this->dimensioncount;}
+	Dimension getDimensioncount() {return this->dimensioncount;}
 	CoordinateSet origo();
 	GameState getState();
 	unsigned int totalMines();
