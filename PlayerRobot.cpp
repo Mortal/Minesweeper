@@ -213,17 +213,15 @@ bool PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
 	MineFieldFilterUnpressed bombfilter;
 	MineFieldFilterLogicalDifference cfilter;
 	MineFieldFilterLogicalDifference cfilterinv;
-	if (this->timer != NULL) this->timer->starttime("MineFieldFilterBombNeighbours::filter");
+	TIMERONS("MineFieldFilterBombNeighbours::filter");
 	/* find the "bomb neighbors" of the current tile */
 	CoordinateSetList bs = bfilter.filter(tiles, this->field);
-	if (this->timer != NULL) {
-		this->timer->endtime("MineFieldFilterBombNeighbours::filter");
-		this->timer->starttime("MineFieldFilterUnpressed::filter");
-	}
+	TIMEROFFS("MineFieldFilterBombNeighbours::filter");
 
+	TIMERONS("MineFieldFilterUnpressed::filter");
 	/* find the unpressed neighbors of the current tile */
 	CoordinateSetList a_neighbours = bombfilter.filter(tiles, this->field);
-	if (this->timer != NULL) this->timer->endtime("MineFieldFilterUnpressed::filter");
+	TIMEROFFS("MineFieldFilterUnpressed::filter");
 
 	/* this filter will remove the unpressed neighbors of the current tile */
 	cfilter.set(a_neighbours);
@@ -237,24 +235,24 @@ bool PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
 		if (pb->getSurroundings() < pa->getSurroundings()) continue;
 		/* this tile B has as many or more neighbors than the current tile A */
 
-		if (this->timer != NULL) this->timer->starttime("MineFieldFilterUnpressed::filter");
+		TIMERONS("MineFieldFilterUnpressed::filter");
 		/* find the unpressed neighbors of this tile */
 		CoordinateSetList b_neighbours = bombfilter.filter(this->field->neighbourhoodpositions(b), this->field);
-		if (this->timer != NULL) this->timer->endtime("MineFieldFilterUnpressed::filter");
+		TIMEROFFS("MineFieldFilterUnpressed::filter");
 
 		cfilterinv.set(b_neighbours);
 
-		if (this->timer != NULL) this->timer->starttime("MineFieldFilterLogicalDifference::filter");
+		TIMERONS("MineFieldFilterLogicalDifference::filter");
 		/* find the unpressed neighbors of A that are not unpressed neighbors of B */
 		CoordinateSetList subsetcheck = cfilterinv.filter(a_neighbours, this->field);
-		if (this->timer != NULL) this->timer->endtime("MineFieldFilterLogicalDifference::filter");
+		TIMEROFFS("MineFieldFilterLogicalDifference::filter");
 
 		if (subsetcheck.size()) continue; // a has neighbours that b doesn't have, so it is not a subset
 
-		if (this->timer != NULL) this->timer->starttime("MineFieldFilterLogicalDifference::filter");
+		TIMERONS("MineFieldFilterLogicalDifference::filter");
 		/* find the unpressed neighbors of B that are not unpressed neighbors of A */
 		CoordinateSetList c = cfilter.filter(b_neighbours, this->field);
-		if (this->timer != NULL) this->timer->endtime("MineFieldFilterLogicalDifference::filter");
+		TIMEROFFS("MineFieldFilterLogicalDifference::filter");
 
 		if (!c.size()) continue;
 		// B has unpressed neighbors that A doesn't have
