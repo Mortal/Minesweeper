@@ -9,7 +9,7 @@
 #include "Timer.h"
 
 PlayerRobot::PlayerRobot(Game *field, ProgramOptions opts, NullTimer *timer):
-field(field), croaking(false), timer(timer), opts(opts) {
+timer(timer), field(field), croaking(false), opts(opts) {
 	if (!opts.fieldfile.empty()) {
 		this->fieldfile.open(opts.fieldfile.c_str());
 	}
@@ -101,11 +101,8 @@ bool PlayerRobot::tick() {
 		if (tile == NULL) continue;
 		ACT(act_safemap);
 		if (!tile->getDepressed() || !tile->getSurroundings()) continue;
-		bool a = success;
 		ACT(act_singleflagging);
-		bool b = success;
 		ACT(act_safespots);
-		bool c = success;
 		if (!returnsuccess && this->field->totalFlags() < this->field->totalMines()) {
 			ACT(act_dualcheck);
 		}
