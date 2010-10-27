@@ -6,7 +6,7 @@
 
 class HumanCoordinateInput {
 public:
-	HumanCoordinateInput(std::string input, int dimensioncount);
+	HumanCoordinateInput(std::string input, Dimension dimensioncount);
 	CoordinateSet get() {return this->_coords;};
 	bool valid() {return this->_valid;};
 private:
