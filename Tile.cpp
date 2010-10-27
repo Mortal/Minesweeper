@@ -4,7 +4,7 @@
 #include <ostream>
 #include "ColourHandler.h"
 
-Tile::Tile(): blarg(false), flag(false), depressed(false), aroundtheworld(0) {
+Tile::Tile(): aroundtheworld(0), depressed(false), blarg(false), flag(false) {
 }
 
 void Tile::setFlag(Flag to) {

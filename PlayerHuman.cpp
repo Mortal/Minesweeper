@@ -28,7 +28,7 @@ void trimstring(std::string *s) {
 	s->resize(i);
 }
 
-HumanCoordinateInput::HumanCoordinateInput(std::string input, int dimensioncount) {
+HumanCoordinateInput::HumanCoordinateInput(std::string input, Dimension dimensioncount) {
 	trimstring(&input);
 	std::list<std::string> coords = splitstring(input, ",");
 	this->_valid = false;
