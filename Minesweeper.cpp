@@ -42,8 +42,10 @@ Minesweeper::Minesweeper(int argc, char* argv[]) {
 		screenInit();
 		parseargs(argc, argv);
 		tests();
-		gameInit();
-		play();
+		do {
+			gameInit();
+			play();
+		} while (opts.repeat);
 		conclusion();
 	} catch (int e) {
 		exitcode = e;
@@ -59,6 +61,7 @@ void Minesweeper::initfields() {
 	mines = 10;
 	automines = true;
 	opts.verbose = false;
+	opts.repeat = false;
 	opts.ai = true;
 	opts.waitonquit = true;
 #ifdef TIMING
@@ -99,6 +102,8 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 			opts.waitonquit = true;
 		} else if (*argi == "--no-wait") {
 			opts.waitonquit = false;
+		} else if (*argi == "-r" || *argi == "--repeat") {
+			opts.repeat = !opts.repeat;
 		} else {
 			unsigned int input;
 			std::stringstream numstream(*argi);
@@ -161,6 +166,7 @@ void Minesweeper::screenInit() {
 
 void Minesweeper::gameInit() {
 	if (opts.verbose) *console << "Establishing gamefield" << std::endl;
+	if (field != NULL) delete field;
 	timer->starttime("Establishing gamefield");
 	field = new Game(size.size(), size, timer);
 	field->startgame(mines);

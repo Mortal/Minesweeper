@@ -26,6 +26,7 @@ typedef bool Flag;
 
 struct ProgramOptions {
 	bool verbose;
+	bool repeat;
 	bool ai;
 	bool waitonquit;
 	class NullTimer *timer;
