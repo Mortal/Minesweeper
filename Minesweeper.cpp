@@ -167,7 +167,11 @@ void Minesweeper::gameInit() {
 	timer->endtime("Establishing gamefield");
 
 	initscr();
-	getch(); // why is this necessary?
+	if (opts.waitonquit) {
+		printw("Press any key to begin\n");
+		refresh();
+		getch(); // why is this necessary?
+	}
 	start_color();
 	init_pair(1, COLOR_RED, COLOR_BLACK); // flags and blown mines
 	init_pair(2, COLOR_CYAN, COLOR_BLACK); // unpressed tiles
@@ -193,7 +197,7 @@ void Minesweeper::play() {
 	while (field->getState() == GAMESTATE_PLAY) {
 		Tick *tick = player->tick();
 		if (tick == NULL) break;
-		*console << tick->getDescription() << std::endl;
+		if (opts.verbose) *console << tick->getDescription() << std::endl;
 		MoveList moves = tick->getMoves();
 		bool giveup = false;
 		for (MoveListIt i = moves.begin(); field->getState() == GAMESTATE_PLAY && i != moves.end(); ++i) {
