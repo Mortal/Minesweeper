@@ -12,12 +12,6 @@
 
 PlayerRobot::PlayerRobot(Game *field, std::ostream *console, ProgramOptions opts, NullTimer *timer):
 timer(timer), field(field), croaking(false), opts(opts), console(console) {
-	if (!opts.fieldfile.empty()) {
-		this->fieldfile.open(opts.fieldfile.c_str());
-	}
-}
-PlayerRobot::~PlayerRobot() {
-	if (!this->fieldfile.is_open()) this->fieldfile.close();
 }
 
 void PlayerRobot::ncroak(std::string msg) {
@@ -96,10 +90,6 @@ Tick *PlayerRobot::tick() {
 	Tick *ret = new Tick("No more tiles");
 	ret->addMove(new GiveUpMove());
 	return ret;
-}
-
-void PlayerRobot::giveup() {
-	this->croak("Alas, I am slain!");
 }
 
 Tick *PlayerRobot::act_singleflagging(CoordinateSet tile, Tile *ptile) {
