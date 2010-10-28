@@ -7,13 +7,25 @@ WStream::~WStream() {
 	delete rdbuf();
 }
 
+void WStream::setwin(WINDOW *w) {
+	(dynamic_cast<WStreamBuffer*>(rdbuf()))->setwin(w);
+}
+
 WStreamBuffer::WStreamBuffer(WINDOW *w) : window(w) {
 }
+
 int WStreamBuffer::overflow(int ch) {
-	waddch(window, (char) ch);
+	if (window != NULL) {
+		waddch(window, (char) ch);
+	}
 	return 1;
 }
+
 int WStreamBuffer::sync() {
 	wrefresh(window);
 	return 0;
+}
+
+void WStreamBuffer::setwin(WINDOW *w) {
+	window = w;
 }

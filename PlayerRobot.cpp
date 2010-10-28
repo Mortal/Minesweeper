@@ -9,8 +9,8 @@
 #include "Timer.h"
 #include <ncurses.h>
 
-PlayerRobot::PlayerRobot(Game *field, ProgramOptions opts, NullTimer *timer):
-timer(timer), field(field), croaking(false), opts(opts) {
+PlayerRobot::PlayerRobot(Game *field, std::ostream *console, ProgramOptions opts, NullTimer *timer):
+timer(timer), field(field), croaking(false), opts(opts), console(console) {
 	if (!opts.fieldfile.empty()) {
 		this->fieldfile.open(opts.fieldfile.c_str());
 	}
@@ -20,66 +20,56 @@ PlayerRobot::~PlayerRobot() {
 }
 
 void PlayerRobot::ncroak(std::string msg) {
-	/*
 	if (!opts.verbose) return;
 	if (!this->croaking) {
-		std::cout << "BOT: ";
+		*console << "BOT: ";
 		this->croakstatus();
 		this->croaking = true;
 	}
-	std::cout << msg;
-	*/
+	*console << msg;
 }
 void PlayerRobot::croak(std::string msg) {
-	/*
 	if (!opts.verbose) return;
 	this->ncroak(msg);
 	this->croakend();
-	*/
 }
 void PlayerRobot::croak(std::string msg, CoordinateSet a, CoordinateSet b) {
-	/*
 	if (!opts.verbose) return;
 	this->ncroak(msg);
-	std::cout << ' ';
+	*console << ' ';
 	{
 		CoordinateSetIt i = a.begin();
 		while (true) {
-			std::cout << *i;
+			*console << *i;
 			++i;
 			if (i == a.end()) {break;}
-			std::cout << ',';
+			*console << ',';
 		}
 	}
-	std::cout << ' ';
+	*console << ' ';
 	{
 		CoordinateSetIt i = b.begin();
 		while (true) {
-			std::cout << *i;
+			*console << *i;
 			++i;
 			if (i == b.end()) {break;}
-			std::cout << ',';
+			*console << ',';
 		}
 	}
 	this->croakend();
-	*/
 }
 void PlayerRobot::croakend() {
-	/*
 	if (!opts.verbose) return;
 	if (this->croaking) {
-		this->field->one_down(&std::cout);
+		*console << std::endl;
 		this->croaking = false;
 	}
-	*/
 }
 void PlayerRobot::croakstatus() {
-	/*
 	if (!opts.verbose) return;
-	std::cout << this->field->totalFlags() << "/" << this->field->totalMines() << ", "
+	*console << this->field->totalFlags() << "/" << this->field->totalMines() << ", "
 		<< (this->field->totalFlags() + this->field->getPressedCount()) << "/"
 		<< this->field->getTileCount() << " ";
-	*/
 }
 
 void PlayerRobot::play() {
@@ -110,7 +100,9 @@ bool PlayerRobot::tick() {
 		bool success = false;
 		CoordinateSet i;
 		if (checkfirst.empty()) {
-			if (field == this->field->coordend()) break;
+			if (field == this->field->coordend()) {
+				break;
+			}
 			i = *field;
 			++field;
 		} else {
@@ -126,8 +118,8 @@ bool PlayerRobot::tick() {
 			*/
 			if (this->opts.fieldoutput) {
 				/*
-				std::cout << "-";
-				this->field->one_down(&std::cout);
+				*console << "-";
+				this->field->one_down(&console);
 				*/
 				this->field->output();
 			}
@@ -190,7 +182,7 @@ bool PlayerRobot::act_safespots(CoordinateSet tile, Tile *ptile) {
 		if (neighbour != NULL && FLAG_ON(neighbour->getFlag())) ++flagged;
 	}
 	if (ptile->getSurroundings() != flagged || tiles.size() <= flagged) {
-		//std::cout << "Neighbouring unpressed tiles: " << tiles.size()
+		//*console << "Neighbouring unpressed tiles: " << tiles.size()
 		//	<< "Surrounding bombs: " << ptile->getSurroundings()
 		//	<< "Flagged neighbouring tiles: " << flagged << std::endl;
 		TIMEROFF;

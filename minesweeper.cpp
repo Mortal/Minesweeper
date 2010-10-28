@@ -5,6 +5,7 @@
 #include "PlayerRobot.h"
 #include "Timer.h"
 #include "Logger.h"
+#include "Screen.h"
 #include <iostream>
 #include <vector>
 #include <sstream>
@@ -124,21 +125,28 @@ int main(int argc, char* argv[])
 	//RULES4DEASY;
 	START(mines);
 	timer->endtime("Establishing gamefield");
-	if (opts.verbose) std::cout << "Playing game" << std::endl;
-	timer->starttime("Create player");
-	Player *player;
-	if (opts.ai) {
-		player = new PlayerRobot(&field, opts, timer);
-	} else {
-		player = new PlayerHuman(&field);
-	}
-	timer->endtime("Create player");
 
 	initscr();
+	getch(); // why is this necessary?
 	start_color();
 	init_pair(1, COLOR_RED, COLOR_BLACK); // flags and blown mines
 	init_pair(2, COLOR_CYAN, COLOR_BLACK); // unpressed tiles
 	init_pair(3, COLOR_WHITE, COLOR_BLACK); // pressed tiles
+
+	Screen *scr = new Screen();
+	std::ostream *console = scr->getConsole();
+	scr->setfieldsize(field.getOutputWidth(), field.getOutputHeight());
+	field.setBombField(scr->getBombField());
+
+	if (opts.verbose) *console << "Playing game" << std::endl;
+	timer->starttime("Create player");
+	Player *player;
+	if (opts.ai) {
+		player = new PlayerRobot(&field, console, opts, timer);
+	} else {
+		player = new PlayerHuman(&field, console);
+	}
+	timer->endtime("Create player");
 
 	timer->starttime("Play");
 	player->play();
@@ -148,8 +156,7 @@ int main(int argc, char* argv[])
 		if (field.getState() == GAMESTATE_LOSE) msg = "Game lost!";
 		else if (field.getState() == GAMESTATE_WIN) msg = "Congratulations!";
 		if (opts.waitonquit) {
-			printw("%s\n", msg);
-			refresh();
+			*console << msg;
 			getch();
 			endwin();
 		} else {

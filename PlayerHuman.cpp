@@ -48,8 +48,8 @@ HumanCoordinateInput::HumanCoordinateInput(std::string input, Dimension dimensio
 	this->_coords = ret;
 }
 
-PlayerHuman::PlayerHuman(Game *field) {
-	this->field = field;
+PlayerHuman::PlayerHuman(Game *field, std::ostream *console) :
+field(field), console(console) {
 }
 
 void PlayerHuman::play() {

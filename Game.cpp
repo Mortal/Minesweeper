@@ -13,7 +13,7 @@
 
 Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
 timer(timer), dimensioncount(dimensioncount), dimensions(dimensions), allpositions_initialised(false), minecount(0),
-flagcount(0), pressedcount(0), linecount(0), state(GAMESTATE_INIT), window(stdscr) {
+flagcount(0), pressedcount(0), linecount(0), state(GAMESTATE_INIT), window(NULL) {
 	assert(dimensions.size() == dimensioncount);
 	assert(dimensioncount > 0);
 	this->inittiles(0);
@@ -199,19 +199,19 @@ void Game::startgame(int mines) {
 }
 
 void Game::one_down() {
-	printw("\n");
+	wprintw(window, "\n");
 }
 
 void Game::output() {
 	TIMERON;
 	CoordinateSet basis = this->origo();
-	this->outputdimensions(window, this->dimensioncount % 2, basis);
-	move(0,0);
-	refresh();
+	wmove(window, 0, 0);
+	this->outputdimensions(this->dimensioncount % 2, basis);
+	wrefresh(window);
 	TIMEROFF;
 }
 
-void Game::outputrow(WINDOW* w, Dimension dim, CoordinateSet basis) {
+void Game::outputrow(Dimension dim, CoordinateSet basis) {
 	// we're only outputting rows on the last, third to last, etc. dimensions
 	// if we have an even number of dimensions, then the dimensions numbered
 	// {..., count-3, count-1} will all be odd
@@ -224,23 +224,23 @@ void Game::outputrow(WINDOW* w, Dimension dim, CoordinateSet basis) {
 			CoordinateSet tile = basis;
 			tile[dim] = i;
 			chtype output = this->getTile(tile)->output();
-			addch(output);
+			waddch(window, (char) output);
 		}
 		return;
 	}
 	for (Coordinate i = 0; i < this->dimensions[dim]; ++i) {
 		if (i > 0) {
-			printw(" ");
+			waddch(window, ' ');
 		}
 		CoordinateSet subbasis = basis;
 		subbasis[dim] = i;
-		this->outputrow(w, dim+2, subbasis);
+		this->outputrow(dim+2, subbasis);
 	}
 }
 
-void Game::outputdimensions(WINDOW *w, Dimension dim, CoordinateSet basis) {
+void Game::outputdimensions(Dimension dim, CoordinateSet basis) {
 	if (this->dimensioncount % 2 != dim % 2) {
-		this->outputrow(w, dim, basis);
+		this->outputrow(dim, basis);
 		return;
 	}
 	if (dim == this->dimensioncount-2) { // 2-dimensional field
@@ -254,14 +254,16 @@ void Game::outputdimensions(WINDOW *w, Dimension dim, CoordinateSet basis) {
 		for (Coordinate y = 0; y < this->dimensions[dim]; y++) {
 			CoordinateSet rowbasis = basis;
 			rowbasis[dim] = y;
-			this->outputrow(w, 0, rowbasis);
-			printw("\n");
+			this->outputrow(0, rowbasis);
 		}
 	} else {
 		for (Coordinate i = 0; i < this->dimensions[dim]; i++) {
+			if (i) {
+				waddch(window, '\n');
+			}
 			CoordinateSet newbasis = basis;
 			newbasis[dim] = i;
-			this->outputdimensions(w, dim+2, newbasis);
+			this->outputdimensions(dim+2, newbasis);
 		}
 	}
 }
@@ -351,4 +353,33 @@ void Game::_allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *
 			this->_allpositions(dim+1, set, list);
 		}
 	}
+}
+int Game::getOutputHeight() {
+	int len = 1;
+	if (dimensioncount > 2) {
+		Dimension d = dimensioncount-2;
+		while (1) {
+			len *= dimensions[d];
+			if (d < 3) break;
+			d -= 2;
+		}
+	}
+	len = len * dimensions[dimensioncount-2] + len - 1;
+	return len;
+}
+int Game::getOutputWidth() {
+	int len = 1;
+	if (dimensioncount > 3) {
+		Dimension d = dimensioncount-3;
+		while (1) {
+			len *= dimensions[d];
+			if (d < 2) break;
+			d -= 2;
+		}
+	}
+	len = len * dimensions[dimensioncount-1] + len - 1;
+	return len;
+}
+void Game::setBombField(WINDOW *w) {
+	window = w;
 }

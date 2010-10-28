@@ -5,6 +5,7 @@ MineFieldFilters.o
 PTileSetOperations.o
 PlayerHuman.o
 PlayerRobot.o
+Screen.o
 Tile.o
 Timer.o
 minesweeper

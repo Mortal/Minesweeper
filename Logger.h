@@ -7,6 +7,7 @@ class WStream : public std::ostream {
 	public:
 		WStream(WINDOW *w);
 		~WStream();
+		void setwin(WINDOW *w);
 };
 
 class WStreamBuffer : public std::streambuf {
@@ -14,6 +15,7 @@ class WStreamBuffer : public std::streambuf {
 		WStreamBuffer(WINDOW *w);
 		virtual int overflow(int ch);
 		virtual int sync();
+		void setwin(WINDOW *w);
 	private:
 		WINDOW *window;
 };

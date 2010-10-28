@@ -16,11 +16,12 @@ private:
 
 class PlayerHuman: public Player {
 public:
-	PlayerHuman(Game *field);
+	PlayerHuman(Game *field, std::ostream *console);
 	virtual void play();
 private:
 	Game *field;
 	void dead();
+	std::ostream *console;
 };
 
 #endif

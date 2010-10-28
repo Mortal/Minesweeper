@@ -16,7 +16,7 @@ enum GameState {
 
 class Game {
 public:
-	Game(Dimension dimensioncount, SizeVector dimensions, class NullTimer *timer = NULL);
+	Game(Dimension dimensioncount, SizeVector dimensions, class NullTimer *timer);
 	CoordinateSetList neighbourhoodpositions(CoordinateSet pos, bool includeself = false);
 	PTileSet neighbourhood(CoordinateSet pos, bool includeself = false);
 	CoordinateSetList::const_iterator coordbegin();
@@ -37,6 +37,9 @@ public:
 	unsigned int getPressedCount() {return this->pressedcount;}
 	unsigned int getTileCount() {return this->tilecount;}
 	void one_down();
+	int getOutputWidth();
+	int getOutputHeight();
+	void setBombField(WINDOW *w);
 private:
 	NullTimer *timer;
 	Dimension dimensioncount;
@@ -52,8 +55,8 @@ private:
 	unsigned int pressedcount;
 	unsigned int coordstofieldindex(CoordinateSet pos);
 	CoordinateSet fieldindextocoords(unsigned int idx);
-	void outputrow(WINDOW* w, Dimension dim, CoordinateSet basis);
-	void outputdimensions(WINDOW* w, Dimension dim, CoordinateSet basis);
+	void outputrow(Dimension dim, CoordinateSet basis);
+	void outputdimensions(Dimension dim, CoordinateSet basis);
 	int linecount;
 	void deploythemines(int);
 	void filltheblanks();
