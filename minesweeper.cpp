@@ -42,8 +42,6 @@ int main(int argc, char* argv[])
 	opts.verbose = false;
 	opts.ai = false;
 	opts.waitonquit = false;
-	opts.fieldoutput = false;
-	opts.fieldfile = "";
 #ifdef TIMING
 	opts.timer = new Timer;
 #else
@@ -62,14 +60,8 @@ int main(int argc, char* argv[])
 			opts.verbose = !opts.verbose;
 		} else if (*argi == "--ai") {
 			opts.ai = !opts.ai;
-		} else if (*argi == "-F" || *argi == "--fieldoutput") {
-			opts.fieldoutput = !opts.fieldoutput;
 		} else if (*argi == "-w" || *argi == "--wait") {
 			opts.waitonquit = !opts.waitonquit;
-		} else if (*argi == "-f" || *argi == "--fieldfile") {
-			++argi;
-			if (argi == args.end()) break;
-			opts.fieldfile = *argi;
 		} else {
 			unsigned int input;
 			std::stringstream numstream(*argi);

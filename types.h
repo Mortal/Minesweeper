@@ -29,8 +29,6 @@ struct ProgramOptions {
 	bool ai;
 	bool waitonquit;
 	class NullTimer *timer;
-	std::string fieldfile;
-	bool fieldoutput;
 };
 
 #endif
