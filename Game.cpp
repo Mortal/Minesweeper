@@ -280,6 +280,7 @@ bool Game::amIDeadNow(CoordinateSet pos) {
 		this->state = GAMESTATE_LOSE;
 		return true;
 	}
+	drawtile(pos);
 	return false;
 }
 void Game::press(CoordinateSet pos, bool norecursivespread) {
@@ -303,6 +304,7 @@ bool Game::flagon(CoordinateSet pos) {
 		std::cout << "Whoops, setting flag on a safe tile" << std::endl;
 	}
 	if (!alreadyflag) ++this->flagcount;
+	drawtile(pos);
 	return !alreadyflag;
 }
 bool Game::flagoff(CoordinateSet pos) {
@@ -310,6 +312,7 @@ bool Game::flagoff(CoordinateSet pos) {
 	bool alreadyflag = FLAG_ON(tile->getFlag());
 	tile->setFlag(false);
 	if (alreadyflag) --this->flagcount;
+	drawtile(pos);
 	return alreadyflag;
 }
 bool Game::pressblanks(Dimension dim, CoordinateSet basis) {
@@ -380,6 +383,38 @@ int Game::getOutputWidth() {
 	len = len * dimensions[dimensioncount-1] + len - 1;
 	return len;
 }
+int Game::getOutputColumn(CoordinateSet p) {
+	int factor = 1;
+	int sum = 0;
+	Dimension d = dimensioncount-1;
+	while (1) {
+		sum += p[d]*factor;
+		if (d < 2) break;
+		factor *= dimensions[d];
+		++factor;
+		d -= 2;
+	}
+	return sum;
+}
+int Game::getOutputRow(CoordinateSet p) {
+	int factor = 1;
+	int sum = 0;
+	Dimension d = dimensioncount-2;
+	while (1) {
+		sum += p[d]*factor;
+		if (d < 2) break;
+		factor *= dimensions[d];
+		++factor;
+		d -= 2;
+	}
+	return sum;
+}
 void Game::setBombField(WINDOW *w) {
 	window = w;
+}
+void Game::drawtile(CoordinateSet p) {
+	Tile *t = getTile(p);
+	chtype output = t->output();
+	wmove(window, getOutputRow(p), getOutputColumn(p));
+	wechochar(window, output);
 }

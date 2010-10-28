@@ -137,6 +137,7 @@ int main(int argc, char* argv[])
 	std::ostream *console = scr->getConsole();
 	scr->setfieldsize(field.getOutputWidth(), field.getOutputHeight());
 	field.setBombField(scr->getBombField());
+	field.output();
 
 	if (opts.verbose) *console << "Playing game" << std::endl;
 	timer->starttime("Create player");

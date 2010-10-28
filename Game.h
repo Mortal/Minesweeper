@@ -39,6 +39,9 @@ public:
 	void one_down();
 	int getOutputWidth();
 	int getOutputHeight();
+	int getOutputColumn(CoordinateSet p);
+	int getOutputRow(CoordinateSet p);
+	void drawtile(CoordinateSet p);
 	void setBombField(WINDOW *w);
 private:
 	NullTimer *timer;
