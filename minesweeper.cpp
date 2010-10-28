@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
 		if (field.getState() == GAMESTATE_LOSE) msg = "Game lost!";
 		else if (field.getState() == GAMESTATE_WIN) msg = "Congratulations!";
 		if (opts.waitonquit) {
-			*console << msg;
+			*console << msg << std::endl;
 			getch();
 			endwin();
 		} else {
