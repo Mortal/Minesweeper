@@ -11,34 +11,53 @@
 #include <sstream>
 #include <ncurses.h>
 
-#define START(mines) Game field(size.size(), size, timer); field.startgame(mines);
-#define DIM(i) size.push_back(i)
-#define RULES2D(x,y,mines) DIM(y); DIM(x); START(mines);
-#define RULES3D(x,y,z,mines) DIM(z); DIM(y); DIM(x); START(mines);
-#define RULES4D(x,y,z,w,mines) DIM(w); DIM(z); DIM(y); DIM(x); START(mines);
-#define RULESWMEASY RULES2D(9,9,10) // 81
-#define RULESWMNORMAL RULES2D(16,16,40) // 256
-#define RULESWMHARD RULES2D(16,30,99) // 480
-#define RULES2DEASY RULES2D(20,20,40) // 400
-#define RULES2DNORMAL RULES2D(40,30,200) // 1200
-#define RULES2DHARD RULES2D(60,40,600) // 2400
-#define RULES3DEASY RULES3D(20,8,4,30) // 640
-#define RULES3DNORMAL RULES3D(30,9,5,120) // 1350
-#define RULES3DHARD RULES3D(40,10,6,400) // 2400
-#define RULES4DEASY RULES4D(8,5,4,4,10) // 640
+class Minesweeper {
+	public:
+		Minesweeper(int argc, char* argv[]);
+		~Minesweeper();
+		int getExitCode();
+	private:
+		int exitcode;
+		unsigned int mines;
+		bool automines;
+		SizeVector size;
+		ProgramOptions opts;
+		NullTimer *timer;
+		std::ostream *console;
+		Screen *scr;
+		Game *field;
 
-int main(int argc, char* argv[])
-{
-	std::vector<std::string> args;
-	args.reserve(argc-1);
-	for (int i = 1; i < argc; ++i) {
-		args.push_back(argv[i]);
+		void initfields();
+		void parseargs(int argc, char* argv[]);
+		void tests();
+		void screenInit();
+		void gameInit();
+		void play();
+		void conclusion();
+};
+
+Minesweeper::Minesweeper(int argc, char* argv[]) {
+	initfields();
+	try {
+		parseargs(argc, argv);
+		tests();
+		screenInit();
+		gameInit();
+		play();
+		conclusion();
+	} catch (int e) {
+		exitcode = e;
 	}
-	std::vector<std::string>::iterator argi;
-	unsigned int mines = 10;
-	bool automines = true;
-	SizeVector size;
-	ProgramOptions opts;
+}
+
+int Minesweeper::getExitCode() {
+	return exitcode;
+}
+
+void Minesweeper::initfields() {
+	exitcode = 0;
+	mines = 10;
+	automines = true;
 	opts.verbose = false;
 	opts.ai = true;
 	opts.waitonquit = true;
@@ -47,7 +66,19 @@ int main(int argc, char* argv[])
 #else
 	opts.timer = new NullTimer;
 #endif
-	NullTimer *timer = opts.timer;
+	timer = opts.timer;
+	scr = NULL;
+	console = NULL;
+	field = NULL;
+}
+
+void Minesweeper::parseargs(int argc, char* argv[]) {
+	std::vector<std::string> args;
+	args.reserve(argc-1);
+	for (int i = 1; i < argc; ++i) {
+		args.push_back(argv[i]);
+	}
+	std::vector<std::string>::iterator argi;
 	timer->starttime("Options parsing");
 	for (argi = args.begin(); argi != args.end(); ++argi) {
 		if (*argi == "-m" || *argi == "--mines") {
@@ -77,7 +108,7 @@ int main(int argc, char* argv[])
 	}
 	if (size.size() == 1) {
 		std::cerr << "Only got one dimension! That's no fun" << std::endl;
-		return 1;
+		throw 1;
 	} else if (size.empty()) {
 		size.push_back(4);
 		size.push_back(8);
@@ -110,6 +141,9 @@ int main(int argc, char* argv[])
 		}
 	}
 	timer->endtime("Options parsing");
+}
+
+void Minesweeper::tests() {
 #ifdef TESTING
 	if (opts.verbose) std::cout << "Running tests" << std::endl;
 	timer->starttime("Unit tests");
@@ -118,12 +152,18 @@ int main(int argc, char* argv[])
 	}
 	timer->endtime("Unit tests");
 #endif
-	Screen *scr = new Screen();
-	std::ostream *console = scr->getConsole();
+}
+
+void Minesweeper::screenInit() {
+	scr = new Screen();
+	console = scr->getConsole();
+}
+
+void Minesweeper::gameInit() {
 	if (opts.verbose) *console << "Establishing gamefield" << std::endl;
 	timer->starttime("Establishing gamefield");
-	//RULES4DEASY;
-	START(mines);
+	field = new Game(size.size(), size, timer);
+	field->startgame(mines);
 	timer->endtime("Establishing gamefield");
 
 	initscr();
@@ -133,41 +173,47 @@ int main(int argc, char* argv[])
 	init_pair(2, COLOR_CYAN, COLOR_BLACK); // unpressed tiles
 	init_pair(3, COLOR_WHITE, COLOR_BLACK); // pressed tiles
 
-	scr->setfieldsize(field.getOutputWidth(), field.getOutputHeight());
-	field.setBombField(scr->getBombField());
-	field.output();
+	scr->setfieldsize(field->getOutputWidth(), field->getOutputHeight());
+	field->setBombField(scr->getBombField());
+	field->output();
+}
 
+void Minesweeper::play() {
 	if (opts.verbose) *console << "Playing game" << std::endl;
 	timer->starttime("Create player");
 	Player *player;
 	if (opts.ai) {
-		player = new PlayerRobot(&field, console, opts, timer);
+		player = new PlayerRobot(field, console, opts, timer);
 	} else {
-		player = new PlayerHuman(&field, console);
+		player = new PlayerHuman(field, console);
 	}
 	timer->endtime("Create player");
 
 	timer->starttime("Play");
-	while (field.getState() == GAMESTATE_PLAY) {
+	while (field->getState() == GAMESTATE_PLAY) {
 		Tick *tick = player->tick();
 		if (tick == NULL) break;
 		*console << tick->getDescription() << std::endl;
 		MoveList moves = tick->getMoves();
 		bool giveup = false;
-		for (MoveListIt i = moves.begin(); field.getState() == GAMESTATE_PLAY && i != moves.end(); ++i) {
+		for (MoveListIt i = moves.begin(); field->getState() == GAMESTATE_PLAY && i != moves.end(); ++i) {
 			Move *m = *i;
 			if (NULL != dynamic_cast<GiveUpMove *>(m)) {
 				giveup = true;
 			} else {
-				m->act(&field);
+				m->act(field);
 			}
 		}
 		if (giveup) break;
 	}
 	timer->endtime("Play");
+	delete player;
+}
+
+void Minesweeper::conclusion() {
 	{
 		const char *msg = "";
-		if (field.getState() == GAMESTATE_WIN) msg = "Congratulations!";
+		if (field->getState() == GAMESTATE_WIN) msg = "Congratulations!";
 		else msg = "Game lost!";
 		if (opts.waitonquit) {
 			*console << msg << std::endl;
@@ -179,9 +225,24 @@ int main(int argc, char* argv[])
 		}
 	}
 	timer->output();
-	delete player;
-	delete opts.timer;
-	opts.timer = NULL;
-	return 0;
 }
 
+Minesweeper::~Minesweeper() {
+	if (scr != NULL) {
+		delete scr;
+		scr = NULL;
+	}
+	if (field != NULL) {
+		delete field;
+		field = NULL;
+	}
+	if (opts.timer != NULL) {
+		delete opts.timer;
+		opts.timer = timer = NULL;
+	}
+}
+
+int main(int argc, char* argv[]) {
+	Minesweeper m(argc, argv);
+	return m.getExitCode();
+}

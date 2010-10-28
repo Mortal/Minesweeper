@@ -11,6 +11,6 @@ Tick.o
 Tile.o
 Timer.o
 minesweeper
-minesweeper.o
+Minesweeper.o
 t_PTileSetOperations.o
 test.o

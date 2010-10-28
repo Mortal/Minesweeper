@@ -3,7 +3,7 @@ OPTS=-Wall -O3
 .cpp.o:
 	g++ $(OPTS) -c $<
 
-OBJECTS = Game.o MineFieldFilters.o minesweeper.o PlayerHuman.o PlayerRobot.o PTileSetOperations.o test.o Tile.o Timer.o t_PTileSetOperations.o ColourHandler.o Logger.o Screen.o Move.o Tick.o
+OBJECTS = Game.o MineFieldFilters.o Minesweeper.o PlayerHuman.o PlayerRobot.o PTileSetOperations.o test.o Tile.o Timer.o t_PTileSetOperations.o ColourHandler.o Logger.o Screen.o Move.o Tick.o
 all: $(OBJECTS)
 	g++ $(OPTS) -lncurses $(OBJECTS) -o minesweeper
 
