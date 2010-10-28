@@ -31,6 +31,7 @@ private:
 	ProgramOptions opts;
 	std::ostream *console;
 
+	bool allowcoordreset;
 	CoordinateSetList::const_iterator coord;
 };
 #endif
