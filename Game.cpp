@@ -13,34 +13,52 @@
 
 Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
 timer(timer), dimensioncount(dimensioncount), dimensions(dimensions), allpositions_initialised(false), minecount(0),
-flagcount(0), pressedcount(0), linecount(0), state(GAMESTATE_INIT), window(NULL) {
+flagcount(0), pressedcount(0), state(GAMESTATE_INIT), window(NULL) {
 	assert(dimensions.size() == dimensioncount);
 	assert(dimensioncount > 0);
 	this->inittiles(0);
 	srand(time(NULL) & 0xFFFFFFFF);
 }
 
-GameState Game::getState() {return this->state;}
-unsigned int Game::totalMines() {return this->minecount;}
-unsigned int Game::totalFlags() {return this->flagcount;}
-
-void Game::inittiles(int mines) {
-	this->minecount = mines;
-	this->tiles.resize(0);
-	this->pressedcount = 0;
-	this->flagcount = 0;
-	this->tilecount = 1;
-	SizeVectorIt i;
-	for (i = this->dimensions.begin(); i != this->dimensions.end(); i++) {
-		this->tilecount *= *i;
-	}
-	this->tiles.resize(this->tilecount, NULL);
-	this->filltheblanks();
-	if (mines) this->deploythemines(mines);
-	//this->calculateneighbours(0, this->origo());
-	if (!this->pressblanks(0, this->origo())) this->pressrandom();
-	this->state = GAMESTATE_PLAY;
+void Game::startgame(int mines) {
+	this->inittiles(mines);
 }
+
+void Game::setBombField(WINDOW *w) {
+	window = w;
+}
+
+/********************************************************************
+ * Getters
+ */
+
+GameState Game::getState() {
+	return this->state;
+}
+
+unsigned int Game::totalMines() {
+	return this->minecount;
+}
+
+unsigned int Game::totalFlags() {
+	return this->flagcount;
+}
+
+CoordinateSet Game::origo() {
+	CoordinateSet res;
+	res.resize(this->dimensioncount, 0);
+	return res;
+}
+
+Tile *Game::getTile(CoordinateSet pos) {
+	unsigned int idx = this->coordstofieldindex(pos);
+	assert(this->fieldindextocoords(idx) == pos);
+	return this->tiles[idx];
+}
+
+/********************************************************************
+ * Iterators
+ */
 
 CoordinateSetList::const_iterator Game::coordbegin() {
 	if (!this->allpositions_initialised) {
@@ -49,6 +67,7 @@ CoordinateSetList::const_iterator Game::coordbegin() {
 	}
 	return this->allpositionslist.begin();
 }
+
 CoordinateSetList::const_iterator Game::coordend() {
 	if (!this->allpositions_initialised) {
 		this->allpositionslist = this->allpositions();
@@ -56,12 +75,72 @@ CoordinateSetList::const_iterator Game::coordend() {
 	}
 	return this->allpositionslist.end();
 }
+
 PTileVector::const_iterator Game::tilebegin() {
 	return this->tiles.begin();
 }
+
 PTileVector::const_iterator Game::tileend() {
 	return this->tiles.end();
 }
+
+/** coordbegin and coordend helpers */
+
+CoordinateSetList Game::allpositions() {
+	CoordinateSetList result;
+	this->_allpositions(0, this->origo(), &result);
+	return result;
+}
+
+void Game::_allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list) {
+	if (dim == this->dimensioncount) list->push_back(basis);
+	else {
+		for (unsigned int x = 0; x < this->dimensions[dim]; ++x) {
+			CoordinateSet set = basis;
+			set[dim] = x;
+			this->_allpositions(dim+1, set, list);
+		}
+	}
+}
+
+/**
+ * Populate game tiles with mines and blanks
+ * @param mines Number of mines in the field to be created
+ */
+void Game::inittiles(int mines) {
+	this->minecount = mines;
+	this->tiles.resize(0);
+	this->pressedcount = 0;
+	this->flagcount = 0;
+
+	/* figure out number of tiles */
+	this->tilecount = 1;
+	SizeVectorIt i;
+	for (i = this->dimensions.begin(); i != this->dimensions.end(); i++) {
+		this->tilecount *= *i;
+	}
+
+	/* create a tile list */
+	this->tiles.resize(this->tilecount, NULL);
+
+	/* replace NULLs in tiles with actual tiles */
+	this->filltheblanks();
+
+	/* add mines */
+	if (mines) this->deploythemines(mines);
+
+	/* press all the tiles that don't have bomb neighbours */
+	if (!this->pressblanks(0, this->origo())) {
+		/* if there are no such bombs, press a random non-bomb tile */
+		this->pressrandom();
+	}
+
+	this->state = GAMESTATE_PLAY;
+}
+
+/********************************************************************
+ * inittiles() helpers
+ */
 
 void Game::deploythemines(int mines) {
 	std::vector<unsigned int> minelist;
@@ -87,12 +166,6 @@ void Game::deploythemines(int mines) {
 	}
 }
 
-CoordinateSet Game::origo() {
-	CoordinateSet res;
-	res.resize(this->dimensioncount, 0);
-	return res;
-}
-
 void Game::filltheblanks() {
 	PTileVectorIt j;
 	for (j = this->tiles.begin(); j != this->tiles.end(); ++j) {
@@ -101,163 +174,6 @@ void Game::filltheblanks() {
 	}
 }
 
-void Game::calculateneighbours(Dimension dimension, CoordinateSet basis) {
-	if (dimension >= this->dimensioncount) {
-		Tile *tile = this->getTile(basis);
-		if (tile == NULL) return;
-		int count = 0;
-		PTileSet neighbourhood = this->neighbourhood(basis);
-		PTileSetIt i;
-		for (i = neighbourhood.begin(); i != neighbourhood.end(); ++i) {
-			if (*i != NULL && (*i)->amIDeadNow()) count++;
-		}
-		tile->setSurroundings(count);
-		return;
-	}
-	for (Coordinate x = 0; x < this->dimensions[dimension]; ++x) {
-		CoordinateSet tile = basis;
-		tile[dimension] = x;
-		this->calculateneighbours(dimension+1, tile);
-	}
-}
-
-unsigned int Game::coordstofieldindex(CoordinateSet pos) {
-	unsigned int idx = 0;
-	SizeVectorIt i;
-	CoordinateSetIt j;
-	for (i = this->dimensions.begin(), j = pos.begin();
-		i != this->dimensions.end() && j != pos.end();
-		++i, ++j) {
-		assert(*j < *i);
-		idx *= *i;
-		idx += *j;
-	}
-	return idx;
-}
-CoordinateSet Game::fieldindextocoords(unsigned int idx) {
-	SizeVectorIt i, j;
-	CoordinateSet result = this->origo();
-	Dimension dim;
-	unsigned int coord;
-	for (i = this->dimensions.begin(), dim = 0; i != this->dimensions.end(); ++i, ++dim) {
-		j = i;
-		coord = idx;
-		for (++j; j != this->dimensions.end(); ++j) {
-			coord /= *j;
-		}
-		coord %= *i; // size of current dimension
-		result[dim] = coord;
-	}
-	return result;
-}
-
-Tile *Game::getTile(CoordinateSet pos) {
-	unsigned int idx = this->coordstofieldindex(pos);
-	assert(this->fieldindextocoords(idx) == pos);
-	return this->tiles[idx];
-}
-
-CoordinateSetList Game::neighbourhoodpositions(CoordinateSet pos, bool includeself /*= false*/) {
-	CoordinateSetList result;
-	this->_neighbourhoodpositions(0, pos, includeself, &result);
-	return result;
-}
-void Game::_neighbourhoodpositions(Dimension dim,
-										CoordinateSet basis,
-										bool includebasis,
-										CoordinateSetList *list) {
-	if (dim == this->dimensioncount) {
-		if (includebasis) list->push_back(basis);
-	} else {
-		CoordinateSet temp;
-		if (basis[dim]) {
-			temp = basis;
-			--temp[dim];
-			this->_neighbourhoodpositions(dim+1, temp, true, list);
-		}
-		this->_neighbourhoodpositions(dim+1, basis, includebasis, list);
-		if (1+basis[dim] < this->dimensions[dim]) {
-			temp = basis;
-			++temp[dim];
-			this->_neighbourhoodpositions(dim+1, temp, true, list);
-		}
-	}
-}
-PTileSet Game::neighbourhood(CoordinateSet pos, bool includeself /*= false*/) {
-	PTileSet result;
-	CoordinateSetList neighbours = this->neighbourhoodpositions(pos, includeself);
-	CoordinateSetListIt i;
-	for (i = neighbours.begin(); i != neighbours.end(); ++i) {
-		Tile *tile = this->getTile(*i);
-		if (tile != NULL) result.insert(tile);
-	}
-	return result;
-}
-
-void Game::startgame(int mines) {
-	this->inittiles(mines);
-}
-
-void Game::one_down() {
-	wprintw(window, "\n");
-}
-
-void Game::output() {
-	TIMERON;
-	werase(window);
-	for (CoordinateSetList::const_iterator i = coordbegin(); i != coordend(); ++i) {
-		drawtile(*i);
-	}
-	TIMEROFF;
-}
-
-bool Game::amIDeadNow(CoordinateSet pos) {
-	Tile *tile = this->getTile(pos);
-	if (tile == NULL) return false;
-	if (tile->getDepressed()) return false;
-	this->press(pos);
-	if (this->pressedcount == this->tiles.size()-this->minecount) {
-		this->state = GAMESTATE_WIN;
-	}
-	if (tile->amIDeadNow()) {
-		this->state = GAMESTATE_LOSE;
-		return true;
-	}
-	drawtile(pos);
-	return false;
-}
-void Game::press(CoordinateSet pos, bool norecursivespread) {
-	Tile *tile = this->getTile(pos);
-	tile->press();
-	++this->pressedcount;
-	if (!tile->amIDeadNow() && (tile->getSurroundings() == 0)) {
-		CoordinateSetList neighbours = this->neighbourhoodpositions(pos);
-		CoordinateSetListIt i;
-		for (i = neighbours.begin(); i != neighbours.end(); ++i) {
-			if (norecursivespread && this->getTile(*i)->getSurroundings() == 0) continue;
-			this->amIDeadNow(*i);
-		}
-	}
-}
-bool Game::flagon(CoordinateSet pos) {
-	Tile *tile = this->getTile(pos);
-	bool alreadyflag = FLAG_ON(tile->getFlag());
-	tile->setFlag(true);
-	if (!tile->amIDeadNow()) {
-		std::cout << "Whoops, setting flag on a safe tile" << std::endl;
-	}
-	if (!alreadyflag) ++this->flagcount;
-	drawtile(pos);
-	return !alreadyflag;
-}
-bool Game::flagoff(CoordinateSet pos) {
-	Tile *tile = this->getTile(pos);
-	bool alreadyflag = FLAG_ON(tile->getFlag());
-	tile->setFlag(false);
-	if (alreadyflag) --this->flagcount;
-	drawtile(pos);
-	return alreadyflag;
-}
 bool Game::pressblanks(Dimension dim, CoordinateSet basis) {
 	if (dim >= this->dimensioncount) {
 		Tile *tile = this->getTile(basis);
@@ -275,6 +191,7 @@ bool Game::pressblanks(Dimension dim, CoordinateSet basis) {
 	}
 	return result;
 }
+
 void Game::pressrandom() {
 	int range = this->getTileCount()-this->totalMines();
 	if (range <= 0) return; // whoops
@@ -285,21 +202,42 @@ void Game::pressrandom() {
 		if (!(*i)->amIDeadNow() && !--r) this->amIDeadNow(this->fieldindextocoords(tileindex));
 	}
 }
-CoordinateSetList Game::allpositions() {
-	CoordinateSetList result;
-	this->_allpositions(0, this->origo(), &result);
+
+/********************************************************************
+ * Coordinate conversion
+ */
+
+unsigned int Game::coordstofieldindex(CoordinateSet pos) {
+	unsigned int idx = 0;
+	SizeVectorIt i;
+	CoordinateSetIt j;
+	for (i = this->dimensions.begin(), j = pos.begin();
+		i != this->dimensions.end() && j != pos.end();
+		++i, ++j) {
+		assert(*j < *i);
+		idx *= *i;
+		idx += *j;
+	}
+	return idx;
+}
+
+CoordinateSet Game::fieldindextocoords(unsigned int idx) {
+	SizeVectorIt i, j;
+	CoordinateSet result = this->origo();
+	Dimension dim;
+	unsigned int coord;
+	for (i = this->dimensions.begin(), dim = 0; i != this->dimensions.end(); ++i, ++dim) {
+		j = i;
+		coord = idx;
+		for (++j; j != this->dimensions.end(); ++j) {
+			coord /= *j;
+		}
+		coord %= *i; // size of current dimension
+		result[dim] = coord;
+	}
 	return result;
 }
-void Game::_allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list) {
-	if (dim == this->dimensioncount) list->push_back(basis);
-	else {
-		for (unsigned int x = 0; x < this->dimensions[dim]; ++x) {
-			CoordinateSet set = basis;
-			set[dim] = x;
-			this->_allpositions(dim+1, set, list);
-		}
-	}
-}
+
 int Game::getOutputHeight() {
 	int len = 1;
 	if (dimensioncount > 2) {
@@ -313,6 +251,7 @@ int Game::getOutputHeight() {
 	len = len * dimensions[dimensioncount-2] + len - 1;
 	return len;
 }
+
 int Game::getOutputWidth() {
 	int len = 1;
 	if (dimensioncount > 3) {
@@ -326,6 +265,7 @@ int Game::getOutputWidth() {
 	len = len * dimensions[dimensioncount-1] + len - 1;
 	return len;
 }
+
 int Game::getOutputColumn(CoordinateSet p) {
 	int factor = 1;
 	int sum = 0;
@@ -339,6 +279,7 @@ int Game::getOutputColumn(CoordinateSet p) {
 	}
 	return sum;
 }
+
 int Game::getOutputRow(CoordinateSet p) {
 	int factor = 1;
 	int sum = 0;
@@ -352,9 +293,138 @@ int Game::getOutputRow(CoordinateSet p) {
 	}
 	return sum;
 }
-void Game::setBombField(WINDOW *w) {
-	window = w;
+
+/**
+ * Get the neighbourhood of a tile. Used by PlayerRobot.
+ */
+CoordinateSetList Game::neighbourhoodpositions(CoordinateSet pos, bool includeself /*= false*/) {
+	CoordinateSetList result;
+	this->_neighbourhoodpositions(0, pos, includeself, &result);
+	return result;
 }
+
+void Game::_neighbourhoodpositions(Dimension dim,
+                                   CoordinateSet basis,
+                                   bool includebasis,
+                                   CoordinateSetList *list) {
+	if (dim == this->dimensioncount) {
+		if (includebasis) list->push_back(basis);
+	} else {
+		CoordinateSet temp;
+		if (basis[dim]) {
+			temp = basis;
+			--temp[dim];
+			this->_neighbourhoodpositions(dim+1, temp, true, list);
+		}
+		this->_neighbourhoodpositions(dim+1, basis, includebasis, list);
+		if (1+basis[dim] < this->dimensions[dim]) {
+			temp = basis;
+			++temp[dim];
+			this->_neighbourhoodpositions(dim+1, temp, true, list);
+		}
+	}
+}
+
+PTileSet Game::neighbourhood(CoordinateSet pos, bool includeself /*= false*/) {
+	PTileSet result;
+	CoordinateSetList neighbours = this->neighbourhoodpositions(pos, includeself);
+	CoordinateSetListIt i;
+	for (i = neighbours.begin(); i != neighbours.end(); ++i) {
+		Tile *tile = this->getTile(*i);
+		if (tile != NULL) result.insert(tile);
+	}
+	return result;
+}
+
+/********************************************************************
+ * Player interface. These methods are called by Moves.
+ */
+
+/**
+ * Press a tile. Returns true if the pressed tile was a bomb. Oops!
+ */
+bool Game::amIDeadNow(CoordinateSet pos) {
+	Tile *tile = this->getTile(pos);
+	if (tile == NULL) return false;
+	if (tile->getDepressed()) return false;
+	this->press(pos);
+	if (this->pressedcount == this->tiles.size()-this->minecount) {
+		this->state = GAMESTATE_WIN;
+	}
+	if (tile->amIDeadNow()) {
+		this->state = GAMESTATE_LOSE;
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Called by amIDeadNow: Press a tile. If !norecursivespread and the tile is
+ * not a bomb and doesn't have any bomb neighbours, press all tiles in its
+ * neighbourhood.
+ */
+void Game::press(CoordinateSet pos, bool norecursivespread) {
+	Tile *tile = this->getTile(pos);
+	tile->press();
+	++this->pressedcount;
+	drawtile(pos);
+	if (!tile->amIDeadNow() && (tile->getSurroundings() == 0)) {
+		CoordinateSetList neighbours = this->neighbourhoodpositions(pos);
+		CoordinateSetListIt i;
+		for (i = neighbours.begin(); i != neighbours.end(); ++i) {
+			if (norecursivespread && this->getTile(*i)->getSurroundings() == 0) continue;
+			this->amIDeadNow(*i);
+		}
+	}
+}
+
+/**
+ * Toggle flag on for a tile. Used to mark that the player believes the tile
+ * contains a bomb.
+ */
+bool Game::flagon(CoordinateSet pos) {
+	Tile *tile = this->getTile(pos);
+	bool alreadyflag = FLAG_ON(tile->getFlag());
+	tile->setFlag(true);
+	if (!tile->amIDeadNow()) {
+		std::cout << "Whoops, setting flag on a safe tile" << std::endl;
+	}
+	if (!alreadyflag) ++this->flagcount;
+	drawtile(pos);
+	return !alreadyflag;
+}
+
+/**
+ * Toggle flag off for a tile.
+ */
+bool Game::flagoff(CoordinateSet pos) {
+	Tile *tile = this->getTile(pos);
+	bool alreadyflag = FLAG_ON(tile->getFlag());
+	tile->setFlag(false);
+	if (alreadyflag) --this->flagcount;
+	drawtile(pos);
+	return alreadyflag;
+}
+
+/********************************************************************
+ * Drawing
+ */
+
+/**
+ * Output the whole thing
+ */
+void Game::output() {
+	TIMERON;
+	werase(window);
+	for (CoordinateSetList::const_iterator i = coordbegin(); i != coordend(); ++i) {
+		drawtile(*i);
+	}
+	TIMEROFF;
+}
+
+/**
+ * Output just a single tile
+ */
 void Game::drawtile(CoordinateSet p) {
 	Tile *t = getTile(p);
 	chtype output = t->output();

@@ -17,59 +17,84 @@ enum GameState {
 class Game {
 public:
 	Game(Dimension dimensioncount, SizeVector dimensions, class NullTimer *timer);
-	CoordinateSetList neighbourhoodpositions(CoordinateSet pos, bool includeself = false);
-	PTileSet neighbourhood(CoordinateSet pos, bool includeself = false);
+	void startgame(int mines);
+	void setBombField(WINDOW *w);
+
+	// Getters
+	GameState getState();
+	unsigned int totalMines();
+	unsigned int totalFlags();
+	CoordinateSet origo();
+	Tile *getTile(CoordinateSet pos);
+	Dimension getDimensioncount() {return this->dimensioncount;}
+	unsigned int getPressedCount() {return this->pressedcount;}
+	unsigned int getTileCount() {return this->tilecount;}
+
+	// Iterators
 	CoordinateSetList::const_iterator coordbegin();
 	CoordinateSetList::const_iterator coordend();
 	PTileVector::const_iterator tilebegin();
 	PTileVector::const_iterator tileend();
-	Tile *getTile(CoordinateSet pos);
-	void startgame(int mines);
-	void output();
-	bool amIDeadNow(CoordinateSet pos);
-	bool flagon(CoordinateSet pos);
-	bool flagoff(CoordinateSet pos);
-	Dimension getDimensioncount() {return this->dimensioncount;}
-	CoordinateSet origo();
-	GameState getState();
-	unsigned int totalMines();
-	unsigned int totalFlags();
-	unsigned int getPressedCount() {return this->pressedcount;}
-	unsigned int getTileCount() {return this->tilecount;}
-	void one_down();
+
+	// Coordinate conversion
 	int getOutputWidth();
 	int getOutputHeight();
 	int getOutputColumn(CoordinateSet p);
 	int getOutputRow(CoordinateSet p);
+
+	// used by PlayerRobot
+	CoordinateSetList neighbourhoodpositions(CoordinateSet pos, bool includeself = false);
+	PTileSet neighbourhood(CoordinateSet pos, bool includeself = false);
+
+	// Player interface (called by subclasses of Move)
+	bool amIDeadNow(CoordinateSet pos);
+	bool flagon(CoordinateSet pos);
+	bool flagoff(CoordinateSet pos);
+
+	// Drawing
+	void output();
 	void drawtile(CoordinateSet p);
-	void setBombField(WINDOW *w);
+
 private:
 	NullTimer *timer;
-	Dimension dimensioncount;
+
 	SizeVector dimensions;
+	Dimension dimensioncount;
+
 	PTileVector tiles;
 	unsigned int tilecount;
+
 	CoordinateSetList allpositionslist;
 	bool allpositions_initialised;
-	CoordinateSetList allpositions();
-	void inittiles(int mines);
+
 	unsigned int minecount;
 	unsigned int flagcount;
 	unsigned int pressedcount;
-	unsigned int coordstofieldindex(CoordinateSet pos);
-	CoordinateSet fieldindextocoords(unsigned int idx);
-	int linecount;
+
+	GameState state;
+	WINDOW *window;
+
+	// coordbegin and coordend helpers
+	CoordinateSetList allpositions();
+	void _allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list);
+
+	// tile initialisation
+	void inittiles(int mines);
 	void deploythemines(int);
 	void filltheblanks();
 	bool pressblanks(Dimension dim, CoordinateSet basis);
 	void pressrandom();
-	void calculateneighbours(Dimension dim, CoordinateSet basis);
+
+	// Coordinate conversion
+	unsigned int coordstofieldindex(CoordinateSet pos);
+	CoordinateSet fieldindextocoords(unsigned int idx);
+
+	// used by PlayerRobot
 	void _neighbourhoodpositions(Dimension dim, CoordinateSet basis,
 		bool includebasis, CoordinateSetList *list);
-	void _allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list);
-	GameState state;
+
+	// amIDeadNow helper
 	void press(CoordinateSet pos, bool norecursivespread = false);
-	WINDOW *window;
 };
 
 #endif
