@@ -39,9 +39,9 @@ class Minesweeper {
 Minesweeper::Minesweeper(int argc, char* argv[]) {
 	initfields();
 	try {
+		screenInit();
 		parseargs(argc, argv);
 		tests();
-		screenInit();
 		gameInit();
 		play();
 		conclusion();
@@ -107,18 +107,18 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 		}
 	}
 	if (size.size() == 1) {
-		std::cerr << "Only got one dimension! That's no fun" << std::endl;
+		*console << "Only got one dimension! That's no fun" << std::endl;
 		throw 1;
 	} else if (size.empty()) {
 		size.push_back(4);
 		size.push_back(8);
 		size.push_back(20);
 		if (!automines) {
-			std::cerr << "You specified a number of mines but not dimensions! I'll choose number of mines instead" << std::endl;
+			*console << "You specified a number of mines but not dimensions! I'll choose number of mines instead" << std::endl;
 		}
 		automines = true;
 		mines = 30;
-		if (opts.verbose) std::cerr << "Default settings: 3D field of 20x8x4 with 30 mines" << std::endl;
+		if (opts.verbose) *console << "Default settings: 3D field of 20x8x4 with 30 mines" << std::endl;
 	} else {
 		SizeVector size2;
 		size2.reserve(size.size());
@@ -132,12 +132,12 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 			mines = fields/(size.size()*size.size()*size.size());
 		}
 		if (opts.verbose) {
-			std::cerr << "Settings: " << size.size() << "D field of ";
+			*console << "Settings: " << size.size() << "D field of ";
 			for (i = size.rbegin(); i != size.rend(); ++i) {
-				if (i != size.rbegin()) std::cerr << "x";
-				std::cerr << *i;
+				if (i != size.rbegin()) *console << "x";
+				*console << *i;
 			}
-			std::cerr << " with " << mines << " mines" << std::endl;
+			*console << " with " << mines << " mines" << std::endl;
 		}
 	}
 	timer->endtime("Options parsing");
