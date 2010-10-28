@@ -11,18 +11,17 @@ class PlayerRobot: public Player {
 public:
 	PlayerRobot(Game *field, std::ostream *console, ProgramOptions opts, NullTimer *timer = NULL);
 	~PlayerRobot();
-	virtual void play();
+	virtual Tick *tick();
 	void setTimer(NullTimer *timer);
 private:
 	std::ofstream fieldfile;
 	NullTimer *timer;
 	Game *field;
-	bool tick();
 	void giveup();
-	bool act_singleflagging(CoordinateSet tile, Tile *);
-	bool act_safespots(CoordinateSet tile, Tile *);
-	bool act_dualcheck(CoordinateSet tile, Tile *);
-	bool act_safemap(CoordinateSet tile, Tile *);
+	Tick *act_singleflagging(CoordinateSet tile, Tile *);
+	Tick *act_safespots(CoordinateSet tile, Tile *);
+	Tick *act_dualcheck(CoordinateSet tile, Tile *);
+	Tick *act_safemap(CoordinateSet tile, Tile *);
 	bool croaking;
 	void ncroak(std::string msg);
 	void croak(std::string msg);

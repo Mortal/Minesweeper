@@ -3,7 +3,7 @@
 class Player {
 public:
 	Player(class Game *field) {};
-	virtual void play() = 0;
+	virtual class Tick *tick() = 0;
 protected:
 	Player() {};
 };

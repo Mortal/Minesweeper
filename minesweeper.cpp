@@ -149,12 +149,27 @@ int main(int argc, char* argv[])
 	timer->endtime("Create player");
 
 	timer->starttime("Play");
-	player->play();
+	while (field.getState() == GAMESTATE_PLAY) {
+		Tick *tick = player->tick();
+		if (tick == NULL) break;
+		*console << tick->getDescription() << std::endl;
+		MoveList moves = tick->getMoves();
+		bool giveup = false;
+		for (MoveListIt i = moves.begin(); field.getState() == GAMESTATE_PLAY && i != moves.end(); ++i) {
+			Move *m = *i;
+			if (NULL != dynamic_cast<GiveUpMove *>(m)) {
+				giveup = true;
+			} else {
+				m->act(&field);
+			}
+		}
+		if (giveup) break;
+	}
 	timer->endtime("Play");
 	{
 		const char *msg = "";
-		if (field.getState() == GAMESTATE_LOSE) msg = "Game lost!";
-		else if (field.getState() == GAMESTATE_WIN) msg = "Congratulations!";
+		if (field.getState() == GAMESTATE_WIN) msg = "Congratulations!";
+		else msg = "Game lost!";
 		if (opts.waitonquit) {
 			*console << msg << std::endl;
 			getch();

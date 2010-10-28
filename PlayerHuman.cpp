@@ -52,18 +52,19 @@ PlayerHuman::PlayerHuman(Game *field, std::ostream *console) :
 field(field), console(console) {
 }
 
-void PlayerHuman::play() {
+Tick *PlayerHuman::tick() {
+	this->field->output();
+	std::string inputstring;
+	std::cin >> inputstring;
+	HumanCoordinateInput *input;
 	while (1) {
-		this->field->output();
-		std::string inputstring;
-		std::cin >> inputstring;
-		HumanCoordinateInput input(inputstring, field->getDimensioncount());
-		if (!input.valid()) continue;
-		if (this->field->amIDeadNow(input.get())) {
-			this->dead();
-			break;
-		}
+		input = new HumanCoordinateInput(inputstring, field->getDimensioncount());
+		if (input->valid()) break;
+		delete input;
 	}
+	Tick *ret = new Tick("Press tile");
+	ret->addMove(new PressMove(input->get()));
+	return ret;
 }
 
 void PlayerHuman::dead() {

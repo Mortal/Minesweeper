@@ -17,6 +17,8 @@ typedef std::vector<Coordinate> CoordinateSet;
 typedef CoordinateSet::iterator CoordinateSetIt;
 typedef std::list<CoordinateSet> CoordinateSetList;
 typedef CoordinateSetList::iterator CoordinateSetListIt;
+typedef std::list<class Move*> MoveList;
+typedef MoveList::iterator MoveListIt;
 typedef unsigned int Dimension;
 typedef bool Flag;
 #define FLAG_ON(f) (f)

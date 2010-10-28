@@ -8,6 +8,7 @@
 #include <cassert>
 #include "Timer.h"
 #include <ncurses.h>
+#include "Tick.h"
 
 PlayerRobot::PlayerRobot(Game *field, std::ostream *console, ProgramOptions opts, NullTimer *timer):
 timer(timer), field(field), croaking(false), opts(opts), console(console) {
@@ -72,104 +73,55 @@ void PlayerRobot::croakstatus() {
 		<< this->field->getTileCount() << " ";
 }
 
-void PlayerRobot::play() {
-	this->field->output();
-	while (this->field->getState() == GAMESTATE_PLAY) {
-		if (!this->tick()) {
-			break;
-		}
-	}
-
-	this->field->output();
-	if (this->field->getState() == GAMESTATE_WIN) {
-		this->croak("I am victorious.");
-	} else if (this->field->getState() == GAMESTATE_LOSE) {
-		this->croak("I have lost! How can this be?");
-	} else {
-		this->giveup();
-	}
-}
-
-bool PlayerRobot::tick() {
+Tick *PlayerRobot::tick() {
 	CoordinateSetList::const_iterator field = this->field->coordbegin();
-	CoordinateSetStack checkfirst;
-	bool returnsuccess = false;
-	bool changed = false;
-#define ACT(method) if (this->method(i, tile)) returnsuccess = success = changed = true;
-	while (1) {
-		bool success = false;
-		CoordinateSet i;
-		if (checkfirst.empty()) {
-			if (field == this->field->coordend()) {
-				break;
-			}
-			i = *field;
-			++field;
-		} else {
-			i = checkfirst.top();
-			checkfirst.pop();
-		}
-		if (changed) {
-			/*
-			if (this->fieldfile.is_open()) {
-				this->fieldfile.seekp(0);
-				this->field->output(&this->fieldfile);
-			}
-			*/
-			if (this->opts.fieldoutput) {
-				/*
-				*console << "-";
-				this->field->one_down(&console);
-				*/
-				this->field->output();
-			}
-			changed = false;
-		}
+#define ACT(method) {Tick *ret = this->method(i, tile); if (ret != NULL) return ret;}
+	while (field != this->field->coordend()) {
+		CoordinateSet i = *field++;
+
 		Tile *tile = this->field->getTile(i);
 		if (tile == NULL) continue;
+
 		ACT(act_safemap);
+
 		if (!tile->getDepressed() || !tile->getSurroundings()) continue;
+
 		ACT(act_singleflagging);
+
 		ACT(act_safespots);
-		if (!returnsuccess && this->field->totalFlags() < this->field->totalMines()) {
-			ACT(act_dualcheck);
-		}
-		if (success) {
-			CoordinateSetList topush = this->field->neighbourhoodpositions(i);
-			CoordinateSetList::reverse_iterator j;
-			for (j = topush.rbegin(); j != topush.rend(); ++j) {
-				checkfirst.push(*j);
-			}
-		}
+
+		ACT(act_dualcheck);
 	}
 #undef ACT
-	return returnsuccess;
+	Tick *ret = new Tick("No more tiles");
+	ret->addMove(new GiveUpMove());
+	return ret;
 }
 
 void PlayerRobot::giveup() {
 	this->croak("Alas, I am slain!");
 }
 
-bool PlayerRobot::act_singleflagging(CoordinateSet tile, Tile *ptile) {
+Tick *PlayerRobot::act_singleflagging(CoordinateSet tile, Tile *ptile) {
 	TIMERON;
 	CoordinateSetList tiles = this->field->neighbourhoodpositions(tile);
 	MineFieldFilterUnpressed f;
 	tiles = f.filter(tiles, this->field);
-	if (tiles.size() > ptile->getSurroundings()) {TIMERRET(false);}
+	if (tiles.size() > ptile->getSurroundings()) {TIMERRET(NULL);}
 	MineFieldFilterUnflagged unflagfilter;
 	tiles = unflagfilter.filter(tiles, this->field);
-	if (tiles.empty()) {TIMERRET(false);} // no unflagged tiles
-	this->croak("This tile has as many surrounding tiles as it has neighbours");
+	if (tiles.empty()) {TIMERRET(NULL);} // no unflagged tiles
+	Tick *ret = new Tick("This tile has as many surrounding tiles as it has neighbours");
 	CoordinateSetListIt i;
 	// tiles now only contains unflagged tiles
 	for (i = tiles.begin(); i != tiles.end(); ++i) {
-		this->field->flagon(*i);
+		ret->addMove(new FlagOnMove(*i));
 	}
 	TIMEROFF;
-	return true;
+	return ret;
 }
 
-bool PlayerRobot::act_safespots(CoordinateSet tile, Tile *ptile) {
+Tick *PlayerRobot::act_safespots(CoordinateSet tile, Tile *ptile) {
 	TIMERON;
 	CoordinateSetList tiles = this->field->neighbourhoodpositions(tile);
 	MineFieldFilterUnpressed unpressfilter;
@@ -186,18 +138,18 @@ bool PlayerRobot::act_safespots(CoordinateSet tile, Tile *ptile) {
 		//	<< "Surrounding bombs: " << ptile->getSurroundings()
 		//	<< "Flagged neighbouring tiles: " << flagged << std::endl;
 		TIMEROFF;
-		return false;
+		return NULL;
 	}
-	this->croak("The unmarked territory around this tile is safe");
+	Tick *ret = new Tick("The unmarked territory around this tile is safe");
 	for (i = tiles.begin(); i != tiles.end(); ++i) {
 		Tile *neighbour = this->field->getTile(*i);
-		if (neighbour != NULL && FLAG_OFF(neighbour->getFlag())) this->field->amIDeadNow(*i);
+		if (neighbour != NULL && FLAG_OFF(neighbour->getFlag())) ret->addMove(new PressMove(*i));
 	}
 	TIMEROFF;
-	return true;
+	return ret;
 }
 
-bool PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
+Tick *PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
 	/* A is the primary tile that has some known number of bombs as neighbors.
 	 *
 	 * For each tile B that is a neighbor of A and also has some known number of
@@ -272,28 +224,30 @@ bool PlayerRobot::act_dualcheck(CoordinateSet a, Tile *pa) {
 
 		if (pb->getSurroundings() == pa->getSurroundings()) {
 			// face values equal, the set of c are all safe
-			this->croak("Two neighbouring fields with same face values, these fields must be safe", a, b);
+			Tick *ret = new Tick("Two neighbouring fields with same face values, these fields must be safe");
 			for (citer = c.begin(); citer != c.end(); ++citer) {
-				if (this->field->amIDeadNow(*citer)) {TIMERRET(true);}
+				ret->addMove(new PressMove(*citer));
 			}
+			return ret;
 		} else if (pb->getSurroundings()-pa->getSurroundings() == c.size()) { // pb has larger face value than pa
-			this->croak("Two neighbouring fields with differing face values, these unknown fields must all be mines", a, b);
+			Tick *ret = new Tick("Two neighbouring fields with differing face values, these unknown fields must all be mines");
 			CoordinateSetListIt citer;
 			for (citer = c.begin(); citer != c.end(); ++citer) {
-				this->field->flagon(*citer);
+				ret->addMove(new FlagOnMove(*citer));
 			}
+			return ret;
 		}
 	}
 	TIMEROFF;
-	return false;
+	return NULL;
 }
 
-bool PlayerRobot::act_safemap(CoordinateSet tile, Tile *ptile) {
-	if (this->field->totalMines() > this->field->totalFlags()) return false;
+Tick *PlayerRobot::act_safemap(CoordinateSet tile, Tile *ptile) {
+	if (this->field->totalMines() > this->field->totalFlags()) return NULL;
 	if (!ptile->getDepressed() && FLAG_OFF(ptile->getFlag())) {
-		this->croak("We're done with the map, so surely there's no mine here.");
-		this->field->amIDeadNow(tile);
-		return true;
+		Tick *ret = new Tick("We're done with the map, so surely there's no mine here.");
+		ret->addMove(new PressMove(tile));
+		return ret;
 	}
-	return false;
+	return NULL;
 }

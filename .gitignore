@@ -2,10 +2,12 @@ ColourHandler.o
 Game.o
 Logger.o
 MineFieldFilters.o
+Move.o
 PTileSetOperations.o
 PlayerHuman.o
 PlayerRobot.o
 Screen.o
+Tick.o
 Tile.o
 Timer.o
 minesweeper

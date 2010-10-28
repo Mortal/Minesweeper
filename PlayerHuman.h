@@ -3,6 +3,7 @@
 #include "Player.h"
 #include <string>
 #include "types.h"
+#include "Tick.h"
 
 class HumanCoordinateInput {
 public:
@@ -17,7 +18,7 @@ private:
 class PlayerHuman: public Player {
 public:
 	PlayerHuman(Game *field, std::ostream *console);
-	virtual void play();
+	virtual Tick *tick();
 private:
 	Game *field;
 	void dead();
