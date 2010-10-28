@@ -10,6 +10,7 @@ typedef std::stack<CoordinateSet> CoordinateSetStack;
 class PlayerRobot: public Player {
 public:
 	PlayerRobot(Game *field, std::ostream *console, ProgramOptions opts, NullTimer *timer = NULL);
+	virtual ~PlayerRobot() {};
 	virtual Tick *tick();
 	void setTimer(NullTimer *timer);
 private:

@@ -18,6 +18,7 @@ private:
 class PlayerHuman: public Player {
 public:
 	PlayerHuman(Game *field, std::ostream *console);
+	virtual ~PlayerHuman() {};
 	virtual Tick *tick();
 private:
 	Game *field;
