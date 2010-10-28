@@ -29,6 +29,7 @@ class Minesweeper {
 
 		void initfields();
 		void parseargs(int argc, char* argv[]);
+		void calcMines();
 		void tests();
 		void screenInit();
 		void gameInit();
@@ -104,6 +105,8 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 			opts.waitonquit = false;
 		} else if (*argi == "-r" || *argi == "--repeat") {
 			opts.repeat = !opts.repeat;
+		} else if (*argi == "-f" || *argi == "--fullscreen") {
+			opts.fullscreen = !opts.fullscreen;
 		} else {
 			unsigned int input;
 			std::stringstream numstream(*argi);
@@ -111,41 +114,47 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 			if (input) size.push_back(input);
 		}
 	}
-	if (size.size() == 1) {
-		*console << "Only got one dimension! That's no fun" << std::endl;
-		throw 1;
-	} else if (size.empty()) {
-		size.push_back(4);
-		size.push_back(8);
-		size.push_back(20);
-		if (!automines) {
-			*console << "You specified a number of mines but not dimensions! I'll choose number of mines instead" << std::endl;
-		}
-		automines = true;
-		mines = 30;
-		if (opts.verbose) *console << "Default settings: 3D field of 20x8x4 with 30 mines" << std::endl;
-	} else {
-		SizeVector size2;
-		size2.reserve(size.size());
-		SizeVector::reverse_iterator i;
-		for (i = size.rbegin(); i != size.rend(); ++i) size2.push_back(*i);
-		size.swap(size2);
-		if (automines) {
-			unsigned int fields = 1;
-			SizeVectorIt i;
-			for (i = size.begin(); i != size.end(); ++i) fields *= *i;
-			mines = fields/(size.size()*size.size()*size.size());
-		}
-		if (opts.verbose) {
-			*console << "Settings: " << size.size() << "D field of ";
-			for (i = size.rbegin(); i != size.rend(); ++i) {
-				if (i != size.rbegin()) *console << "x";
-				*console << *i;
+	if (!opts.fullscreen) {
+		if (size.size() == 1) {
+			*console << "Only got one dimension! That's no fun" << std::endl;
+			throw 1;
+		} else if (size.empty()) {
+			size.push_back(4);
+			size.push_back(8);
+			size.push_back(20);
+			if (!automines) {
+				*console << "You specified a number of mines but not dimensions! I'll choose number of mines instead" << std::endl;
 			}
-			*console << " with " << mines << " mines" << std::endl;
+			automines = true;
+			mines = 30;
+			if (opts.verbose) *console << "Default settings: 3D field of 20x8x4 with 30 mines" << std::endl;
+		} else {
+			SizeVector size2;
+			size2.reserve(size.size());
+			SizeVector::reverse_iterator i;
+			for (i = size.rbegin(); i != size.rend(); ++i) size2.push_back(*i);
+			size.swap(size2);
+			if (automines) {
+				calcMines();
+			}
+			if (opts.verbose) {
+				*console << "Settings: " << size.size() << "D field of ";
+				for (i = size.rbegin(); i != size.rend(); ++i) {
+					if (i != size.rbegin()) *console << "x";
+					*console << *i;
+				}
+				*console << " with " << mines << " mines" << std::endl;
+			}
 		}
 	}
 	timer->endtime("Options parsing");
+}
+
+void Minesweeper::calcMines() {
+	unsigned int fields = 1;
+	SizeVectorIt i;
+	for (i = size.begin(); i != size.end(); ++i) fields *= *i;
+	mines = fields/(size.size()*size.size()*size.size());
 }
 
 void Minesweeper::tests() {
@@ -168,11 +177,23 @@ void Minesweeper::gameInit() {
 	if (opts.verbose) *console << "Establishing gamefield" << std::endl;
 	if (field != NULL) delete field;
 	timer->starttime("Establishing gamefield");
+	initscr();
+	if (opts.fullscreen) {
+		int rows, cols;
+		getmaxyx(stdscr, rows, cols);
+		SizeVector size2;
+		size2.push_back(rows);
+		size2.push_back(cols);
+		size.resize(2, 0);
+		size.swap(size2);
+		if (automines) {
+			calcMines();
+		}
+	}
 	field = new Game(size.size(), size, timer);
 	field->startgame(mines);
 	timer->endtime("Establishing gamefield");
 
-	initscr();
 	if (opts.waitonquit) {
 		printw("Press any key to begin\n");
 		refresh();

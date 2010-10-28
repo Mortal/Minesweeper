@@ -29,6 +29,7 @@ struct ProgramOptions {
 	bool repeat;
 	bool ai;
 	bool waitonquit;
+	bool fullscreen;
 	class NullTimer *timer;
 };
 
