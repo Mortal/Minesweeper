@@ -173,7 +173,7 @@ void Minesweeper::gameInit() {
 	init_pair(2, COLOR_CYAN, COLOR_BLACK); // unpressed tiles
 	init_pair(3, COLOR_WHITE, COLOR_BLACK); // pressed tiles
 
-	scr->setfieldsize(field->getOutputWidth(), field->getOutputHeight());
+	scr->setfieldsize(field->getOutputWidth()+1, field->getOutputHeight()+1);
 	field->setBombField(scr->getBombField());
 	field->output();
 }
