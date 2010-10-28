@@ -12,8 +12,10 @@
 #include <ncurses.h>
 
 Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
-timer(timer), dimensioncount(dimensioncount), dimensions(dimensions), allpositions_initialised(false), minecount(0),
-flagcount(0), pressedcount(0), state(GAMESTATE_INIT), window(NULL) {
+	timer(timer), dimensions(dimensions), dimensioncount(dimensioncount),
+	allpositions_initialised(false), minecount(0), flagcount(0), pressedcount(0),
+	state(GAMESTATE_INIT), window(NULL) {
+
 	assert(dimensions.size() == dimensioncount);
 	assert(dimensioncount > 0);
 	this->inittiles(0);
