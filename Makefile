@@ -17,4 +17,7 @@ ai4d:
 ai2d:
 	@echo Running a minesweeper example: AI in 2D
 	./minesweeper 75 35
+
+screensaver:
+	./minesweeper --fullscreen --no-wait --repeat
 # DO NOT DELETE
