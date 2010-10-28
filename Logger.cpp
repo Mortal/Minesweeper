@@ -17,6 +17,8 @@ WStreamBuffer::WStreamBuffer(WINDOW *w) : window(w) {
 int WStreamBuffer::overflow(int ch) {
 	if (window != NULL) {
 		waddch(window, (char) ch);
+	} else {
+		strbuf << (char) ch;
 	}
 	return 1;
 }
@@ -28,4 +30,8 @@ int WStreamBuffer::sync() {
 
 void WStreamBuffer::setwin(WINDOW *w) {
 	window = w;
+	const char *s = strbuf.str().c_str();
+	wprintw(window, s);
+	wrefresh(window);
+	strbuf.str("");
 }

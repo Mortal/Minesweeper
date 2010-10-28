@@ -1,6 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 #include <iostream>
+#include <sstream>
 #include <ncurses.h>
 
 class WStream : public std::ostream {
@@ -18,6 +19,7 @@ class WStreamBuffer : public std::streambuf {
 		void setwin(WINDOW *w);
 	private:
 		WINDOW *window;
+		std::stringstream strbuf;
 };
 
 #endif

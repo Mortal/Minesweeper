@@ -118,7 +118,9 @@ int main(int argc, char* argv[])
 	}
 	timer->endtime("Unit tests");
 #endif
-	if (opts.verbose) std::cout << "Establishing gamefield" << std::endl;
+	Screen *scr = new Screen();
+	std::ostream *console = scr->getConsole();
+	if (opts.verbose) *console << "Establishing gamefield" << std::endl;
 	timer->starttime("Establishing gamefield");
 	//RULES4DEASY;
 	START(mines);
@@ -131,8 +133,6 @@ int main(int argc, char* argv[])
 	init_pair(2, COLOR_CYAN, COLOR_BLACK); // unpressed tiles
 	init_pair(3, COLOR_WHITE, COLOR_BLACK); // pressed tiles
 
-	Screen *scr = new Screen();
-	std::ostream *console = scr->getConsole();
 	scr->setfieldsize(field.getOutputWidth(), field.getOutputHeight());
 	field.setBombField(scr->getBombField());
 	field.output();
