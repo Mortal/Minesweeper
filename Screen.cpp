@@ -31,7 +31,7 @@ void Screen::setfieldsize(int width, int height) {
 	if (cw < 0) cw = 0;
 	int ch = wh-height;
 	if (ch < 0) ch = 0;
-	if (ch*100 > cw) {
+	if (ch*10 > cw) {
 		console = newwin(0, 0, height, 0);
 	} else {
 		console = newwin(0, 0, 0, width);
