@@ -58,8 +58,6 @@ private:
 	unsigned int pressedcount;
 	unsigned int coordstofieldindex(CoordinateSet pos);
 	CoordinateSet fieldindextocoords(unsigned int idx);
-	void outputrow(Dimension dim, CoordinateSet basis);
-	void outputdimensions(Dimension dim, CoordinateSet basis);
 	int linecount;
 	void deploythemines(int);
 	void filltheblanks();

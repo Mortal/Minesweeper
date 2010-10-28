@@ -204,68 +204,11 @@ void Game::one_down() {
 
 void Game::output() {
 	TIMERON;
-	CoordinateSet basis = this->origo();
-	wmove(window, 0, 0);
-	this->outputdimensions(this->dimensioncount % 2, basis);
-	wrefresh(window);
+	werase(window);
+	for (CoordinateSetList::const_iterator i = coordbegin(); i != coordend(); ++i) {
+		drawtile(*i);
+	}
 	TIMEROFF;
-}
-
-void Game::outputrow(Dimension dim, CoordinateSet basis) {
-	// we're only outputting rows on the last, third to last, etc. dimensions
-	// if we have an even number of dimensions, then the dimensions numbered
-	// {..., count-3, count-1} will all be odd
-	// and vice versa
-	// thus if dimensioncount is odd then the dimension we're outputting must be even
-	if (dim == 0 && (this->dimensioncount % 2) == 0) ++dim;
-	assert(this->dimensioncount % 2 != dim % 2);
-	if (dim == this->dimensioncount-1) { // row characters
-		for (Coordinate i = 0; i < this->dimensions[dim]; i++) {
-			CoordinateSet tile = basis;
-			tile[dim] = i;
-			chtype output = this->getTile(tile)->output();
-			waddch(window, (char) output);
-		}
-		return;
-	}
-	for (Coordinate i = 0; i < this->dimensions[dim]; ++i) {
-		if (i > 0) {
-			waddch(window, ' ');
-		}
-		CoordinateSet subbasis = basis;
-		subbasis[dim] = i;
-		this->outputrow(dim+2, subbasis);
-	}
-}
-
-void Game::outputdimensions(Dimension dim, CoordinateSet basis) {
-	if (this->dimensioncount % 2 != dim % 2) {
-		this->outputrow(dim, basis);
-		return;
-	}
-	if (dim == this->dimensioncount-2) { // 2-dimensional field
-		/*if (dim) {
-			for (int i = 0; i < dim; i++) {
-				if (i) *fp << ',';
-				*fp << basis[i];
-			}
-			*fp << ",y,x" << std::endl;
-		}*/
-		for (Coordinate y = 0; y < this->dimensions[dim]; y++) {
-			CoordinateSet rowbasis = basis;
-			rowbasis[dim] = y;
-			this->outputrow(0, rowbasis);
-		}
-	} else {
-		for (Coordinate i = 0; i < this->dimensions[dim]; i++) {
-			if (i) {
-				waddch(window, '\n');
-			}
-			CoordinateSet newbasis = basis;
-			newbasis[dim] = i;
-			this->outputdimensions(dim+2, newbasis);
-		}
-	}
 }
 
 bool Game::amIDeadNow(CoordinateSet pos) {
