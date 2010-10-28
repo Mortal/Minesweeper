@@ -95,6 +95,11 @@ private:
 
 	// amIDeadNow helper
 	void press(CoordinateSet pos, bool norecursivespread = false);
+
+	// Drawing
+	void drawborders();
+	void drawhorzborders(int *y, int w, Dimension d);
+	void drawvertborders(int *x, int h, Dimension d);
 };
 
 #endif

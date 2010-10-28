@@ -241,31 +241,19 @@ CoordinateSet Game::fieldindextocoords(unsigned int idx) {
 }
 
 int Game::getOutputHeight() {
-	int len = 1;
-	if (dimensioncount > 2) {
-		Dimension d = dimensioncount-2;
-		while (1) {
-			len *= dimensions[d];
-			if (d < 3) break;
-			d -= 2;
-		}
+	CoordinateSet p = dimensions;
+	for (Dimension d = 0; d < dimensioncount; ++d) {
+		--p[d];
 	}
-	len = len * dimensions[dimensioncount-2] + len - 1;
-	return len;
+	return getOutputRow(p)+1;
 }
 
 int Game::getOutputWidth() {
-	int len = 1;
-	if (dimensioncount > 3) {
-		Dimension d = dimensioncount-3;
-		while (1) {
-			len *= dimensions[d];
-			if (d < 2) break;
-			d -= 2;
-		}
+	CoordinateSet p = dimensions;
+	for (Dimension d = 0; d < dimensioncount; ++d) {
+		--p[d];
 	}
-	len = len * dimensions[dimensioncount-1] + len - 1;
-	return len;
+	return getOutputColumn(p)+1;
 }
 
 int Game::getOutputColumn(CoordinateSet p) {
@@ -417,10 +405,14 @@ bool Game::flagoff(CoordinateSet pos) {
  */
 void Game::output() {
 	TIMERON;
+	immedok(window, false);
 	werase(window);
 	for (CoordinateSetList::const_iterator i = coordbegin(); i != coordend(); ++i) {
 		drawtile(*i);
 	}
+	drawborders();
+	immedok(window, true);
+	wrefresh(window);
 	TIMEROFF;
 }
 
@@ -431,5 +423,45 @@ void Game::drawtile(CoordinateSet p) {
 	Tile *t = getTile(p);
 	chtype output = t->output();
 	wmove(window, getOutputRow(p), getOutputColumn(p));
-	wechochar(window, output);
+	waddch(window, output);
+}
+
+/**
+ * Draw borders
+ */
+void Game::drawborders() {
+	if (dimensioncount <= 2) return;
+	int x = 0, y = 0, w = getOutputWidth(), h = getOutputHeight();
+	drawhorzborders(&x, w, dimensioncount % 2);
+	drawvertborders(&y, h, 1 - dimensioncount % 2);
+}
+
+void Game::drawhorzborders(int *y, int w, Dimension d) {
+	if (d >= dimensioncount-2) {
+		*y += dimensions[d];
+	} else {
+		for (Coordinate yy = 0; yy < dimensions[d]; ++yy) {
+			if (yy) {
+				for (Dimension dd = d; dd < dimensioncount-2; dd += 2) {
+					mvwhline(window, (*y)++, 0, '-', w);
+				}
+			}
+			drawhorzborders(y, w, d+2);
+		}
+	}
+}
+
+void Game::drawvertborders(int *x, int h, Dimension d) {
+	if (d >= dimensioncount-2) {
+		*x += dimensions[d];
+	} else {
+		for (Coordinate xx = 0; xx < dimensions[d]; ++xx) {
+			if (xx) {
+				for (Dimension dd = d; dd < dimensioncount-2; dd += 2) {
+					mvwvline(window, 0, (*x)++, '|', h);
+				}
+			}
+			drawvertborders(x, h, d+2);
+		}
+	}
 }
