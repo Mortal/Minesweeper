@@ -40,8 +40,8 @@ int main(int argc, char* argv[])
 	SizeVector size;
 	ProgramOptions opts;
 	opts.verbose = false;
-	opts.ai = false;
-	opts.waitonquit = false;
+	opts.ai = true;
+	opts.waitonquit = true;
 #ifdef TIMING
 	opts.timer = new Timer;
 #else
@@ -59,9 +59,15 @@ int main(int argc, char* argv[])
 		} else if (*argi == "--verbose") {
 			opts.verbose = !opts.verbose;
 		} else if (*argi == "--ai") {
-			opts.ai = !opts.ai;
-		} else if (*argi == "-w" || *argi == "--wait") {
+			opts.ai = true;
+		} else if (*argi == "--no-ai") {
+			opts.ai = false;
+		} else if (*argi == "-w") {
 			opts.waitonquit = !opts.waitonquit;
+		} else if (*argi == "--wait") {
+			opts.waitonquit = true;
+		} else if (*argi == "--no-wait") {
+			opts.waitonquit = false;
 		} else {
 			unsigned int input;
 			std::stringstream numstream(*argi);

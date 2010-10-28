@@ -12,9 +12,9 @@ clean:
 
 ai4d:
 	@echo Running a minesweeper example: AI in 4D
-	./minesweeper 9 4 8 4 --ai -F -w --verbose
+	./minesweeper 9 4 8 4
 
 ai2d:
 	@echo Running a minesweeper example: AI in 2D
-	./minesweeper 75 35 --ai -F -w --verbose
+	./minesweeper 75 35
 # DO NOT DELETE
