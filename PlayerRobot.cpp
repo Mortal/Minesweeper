@@ -11,7 +11,7 @@
 #include "Tick.h"
 
 PlayerRobot::PlayerRobot(Game *field, std::ostream *console, ProgramOptions opts, NullTimer *timer):
-timer(timer), field(field), croaking(false), opts(opts), console(console) {
+timer(timer), field(field), croaking(false), opts(opts), console(console), coord(field->coordbegin()) {
 }
 
 void PlayerRobot::ncroak(std::string msg) {
@@ -68,10 +68,12 @@ void PlayerRobot::croakstatus() {
 }
 
 Tick *PlayerRobot::tick() {
-	CoordinateSetList::const_iterator field = this->field->coordbegin();
+	if (coord == this->field->coordend()) {
+		coord = this->field->coordbegin();
+	}
 #define ACT(method) {Tick *ret = this->method(i, tile); if (ret != NULL) return ret;}
-	while (field != this->field->coordend()) {
-		CoordinateSet i = *field++;
+	while (coord != this->field->coordend()) {
+		CoordinateSet i = *coord++;
 
 		Tile *tile = this->field->getTile(i);
 		if (tile == NULL) continue;

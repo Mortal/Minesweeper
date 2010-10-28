@@ -30,5 +30,7 @@ private:
 
 	ProgramOptions opts;
 	std::ostream *console;
+
+	CoordinateSetList::const_iterator coord;
 };
 #endif
