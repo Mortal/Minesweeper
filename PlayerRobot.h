@@ -34,5 +34,16 @@ private:
 
 	bool allowcoordreset;
 	CoordinateSetList::const_iterator coord;
+	std::stack<CoordinateSet> coords;
+	CoordinateSet nextcoord();
 };
+
+class NoMoreCoordinatesException : public std::exception {
+	virtual const char* what() const throw() {
+		return "No more coordinates";
+	};
+
+	public:
+		virtual ~NoMoreCoordinatesException () throw() {};
+} static NoMoreCoordinates;
 #endif

@@ -68,16 +68,30 @@ void PlayerRobot::croakstatus() {
 		<< this->field->getTileCount() << " ";
 }
 
-Tick *PlayerRobot::tick() {
-#define ACT(method) {Tick *ret = this->method(i, tile); if (ret != NULL) {allowcoordreset = true; return ret;}}
-	while (allowcoordreset || coord != this->field->coordend()) {
-		if (coord == this->field->coordend()) {
-			coord = this->field->coordbegin();
-			allowcoordreset = false;
-		}
-		CoordinateSet i = *coord++;
+CoordinateSet PlayerRobot::nextcoord() {
+	if (coord == this->field->coordend() && allowcoordreset) {
+		coord = this->field->coordbegin();
+		allowcoordreset = false;
+		return *coord;
+	}
+	if (coord != this->field->coordend()) {
+		return *coord++;
+	}
+	throw NoMoreCoordinates;
+}
 
-		Tile *tile = this->field->getTile(i);
+Tick *PlayerRobot::tick() {
+#define ACT(method) {Tick *ret = this->method(coord, tile); if (ret != NULL) {allowcoordreset = true; return ret;}}
+	while (1) {
+		CoordinateSet coord;
+		Tile *tile;
+		try {
+			coord = nextcoord();
+			tile = this->field->getTile(coord);
+		} catch (NoMoreCoordinatesException& e) {
+			break;
+		}
+
 		if (tile == NULL) continue;
 
 		ACT(act_safemap);
