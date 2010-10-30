@@ -10,6 +10,8 @@
 #include <vector>
 #include <sstream>
 #include <ncurses.h>
+#include <cstdlib> // rand
+#include <ctime> // for seeding
 
 class Minesweeper {
 	public:
@@ -84,6 +86,7 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 	}
 	std::vector<std::string>::iterator argi;
 	timer->starttime("Options parsing");
+	bool gotseed = false;
 	for (argi = args.begin(); argi != args.end(); ++argi) {
 		if (*argi == "-m" || *argi == "--mines") {
 			++argi;
@@ -107,6 +110,14 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 			opts.repeat = !opts.repeat;
 		} else if (*argi == "-f" || *argi == "--fullscreen") {
 			opts.fullscreen = !opts.fullscreen;
+		} else if (*argi == "-s" || *argi == "--seed") {
+			++argi;
+			if (argi == args.end()) break;
+			std::stringstream seedstream(*argi);
+			unsigned int seed;
+			seedstream >> seed;
+			srand(seed);
+			gotseed = true;
 		} else {
 			unsigned int input;
 			std::stringstream numstream(*argi);
@@ -146,6 +157,11 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 				*console << " with " << mines << " mines" << std::endl;
 			}
 		}
+	}
+	if (!gotseed) {
+		unsigned int seed = time(NULL) & 0xFFFFFFFF;
+		if (opts.verbose) *console << "Seed: " << seed << std::endl;
+		srand(seed);
 	}
 	timer->endtime("Options parsing");
 }

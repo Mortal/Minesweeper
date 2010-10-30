@@ -1,7 +1,6 @@
 #include "types.h"
 #include "Game.h"
 #include <cassert>
-#include <ctime> // for seeding
 #include <list>
 #include <iostream>
 #include "Tile.h"
@@ -18,7 +17,6 @@ Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
 	assert(dimensions.size() == dimensioncount);
 	assert(dimensioncount > 0);
 	this->inittiles(0);
-	srand(time(NULL) & 0xFFFFFFFF);
 }
 
 void Game::startgame(int mines) {
