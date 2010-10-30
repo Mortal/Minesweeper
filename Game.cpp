@@ -8,7 +8,6 @@
 #include <algorithm> // sort
 #include "Timer.h"
 #include <ostream>
-#include "ColourHandler.h"
 #include <ncurses.h>
 
 Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):

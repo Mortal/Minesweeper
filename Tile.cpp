@@ -2,7 +2,6 @@
 #include "Tile.h"
 #include <iostream>
 #include <ostream>
-#include "ColourHandler.h"
 #include <ncurses.h>
 
 Tile::Tile(): aroundtheworld(0), depressed(false), blarg(false), flag(false) {

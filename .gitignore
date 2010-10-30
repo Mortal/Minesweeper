@@ -1,4 +1,3 @@
-ColourHandler.o
 Game.o
 Logger.o
 MineFieldFilters.o

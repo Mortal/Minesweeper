@@ -4,7 +4,6 @@
 #include "types.h"
 #include "Tile.h"
 #include <ostream>
-#include "ColourHandler.h"
 #include <ncurses.h>
 
 enum GameState {
