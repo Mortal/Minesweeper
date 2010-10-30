@@ -21,7 +21,7 @@ void Screen::delwins() {
 void Screen::setfieldsize(int width, int height) {
 	/* get screen size */
 	int ww, wh;
-	getmaxyx(screen, wh, ww);
+	getmaxyx(stdscr, wh, ww);
 
 	delwins();
 	/* allocate bombfield of given size */
