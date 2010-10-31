@@ -1,4 +1,5 @@
 #include "types.h"
+#include "Vector.hpp"
 #include "Game.h"
 #include <cassert>
 #include <list>
@@ -9,21 +10,22 @@
 #include <ostream>
 #include <ncurses.h>
 
-Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
-	timer(timer), dimensions(dimensions), dimensioncount(dimensioncount),
+template<unsigned L>
+Game<L>::Game(typename SizeVector<L>::Type dimensions, NullTimer *timer):
+	timer(timer), dimensions(dimensions), dimensioncount(L),
 	allpositions_initialised(false), minecount(0), flagcount(0), pressedcount(0),
 	state(GAMESTATE_INIT), window(NULL) {
 
-	assert(dimensions.size() == dimensioncount);
-	assert(dimensioncount > 0);
 	this->inittiles(0);
 }
 
-void Game::startgame(int mines) {
+template<unsigned L>
+void Game<L>::startgame(int mines) {
 	this->inittiles(mines);
 }
 
-void Game::setBombField(WINDOW *w) {
+template<unsigned L>
+void Game<L>::setBombField(WINDOW *w) {
 	window = w;
 }
 
@@ -31,25 +33,29 @@ void Game::setBombField(WINDOW *w) {
  * Getters
  */
 
-GameState Game::getState() {
+template<unsigned L>
+GameState Game<L>::getState() {
 	return this->state;
 }
 
-unsigned int Game::totalMines() {
+template<unsigned L>
+unsigned int Game<L>::totalMines() {
 	return this->minecount;
 }
 
-unsigned int Game::totalFlags() {
+template<unsigned L>
+unsigned int Game<L>::totalFlags() {
 	return this->flagcount;
 }
 
-CoordinateSet Game::origo() {
-	CoordinateSet res;
-	res.resize(this->dimensioncount, 0);
+template<unsigned L>
+typename CoordinateSet<L>::Type Game<L>::origo() {
+	typename CoordinateSet<L>::Type res;
 	return res;
 }
 
-Tile *Game::getTile(CoordinateSet pos) {
+template<unsigned L>
+Tile *Game<L>::getTile(typename CoordinateSet<L>::Type pos) {
 	unsigned int idx = this->coordstofieldindex(pos);
 	assert(this->fieldindextocoords(idx) == pos);
 	return this->tiles[idx];
@@ -59,7 +65,8 @@ Tile *Game::getTile(CoordinateSet pos) {
  * Iterators
  */
 
-CoordinateSetList::const_iterator Game::coordbegin() {
+template<unsigned L>
+typename CoordinateSet<L>::List::const_iterator Game<L>::coordbegin() {
 	if (!this->allpositions_initialised) {
 		this->allpositionslist = this->allpositions();
 		this->allpositions_initialised = true;
@@ -67,7 +74,8 @@ CoordinateSetList::const_iterator Game::coordbegin() {
 	return this->allpositionslist.begin();
 }
 
-CoordinateSetList::const_iterator Game::coordend() {
+template<unsigned L>
+typename CoordinateSet<L>::List::const_iterator Game<L>::coordend() {
 	if (!this->allpositions_initialised) {
 		this->allpositionslist = this->allpositions();
 		this->allpositions_initialised = true;
@@ -75,27 +83,31 @@ CoordinateSetList::const_iterator Game::coordend() {
 	return this->allpositionslist.end();
 }
 
-PTileVector::const_iterator Game::tilebegin() {
+template<unsigned L>
+PTileVector::const_iterator Game<L>::tilebegin() {
 	return this->tiles.begin();
 }
 
-PTileVector::const_iterator Game::tileend() {
+template<unsigned L>
+PTileVector::const_iterator Game<L>::tileend() {
 	return this->tiles.end();
 }
 
 /** coordbegin and coordend helpers */
 
-CoordinateSetList Game::allpositions() {
-	CoordinateSetList result;
+template<unsigned L>
+typename CoordinateSet<L>::List Game<L>::allpositions() {
+	typename CoordinateSet<L>::List result;
 	this->_allpositions(0, this->origo(), &result);
 	return result;
 }
 
-void Game::_allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list) {
+template<unsigned L>
+void Game<L>::_allpositions(Dimension dim, typename CoordinateSet<L>::Type basis, typename CoordinateSet<L>::List *list) {
 	if (dim == this->dimensioncount) list->push_back(basis);
 	else {
 		for (unsigned int x = 0; x < this->dimensions[dim]; ++x) {
-			CoordinateSet set = basis;
+			typename CoordinateSet<L>::Type set = basis;
 			set[dim] = x;
 			this->_allpositions(dim+1, set, list);
 		}
@@ -106,7 +118,8 @@ void Game::_allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *
  * Populate game tiles with mines and blanks
  * @param mines Number of mines in the field to be created
  */
-void Game::inittiles(int mines) {
+template<unsigned L>
+void Game<L>::inittiles(int mines) {
 	this->minecount = mines;
 	this->tiles.resize(0);
 	this->pressedcount = 0;
@@ -114,9 +127,8 @@ void Game::inittiles(int mines) {
 
 	/* figure out number of tiles */
 	this->tilecount = 1;
-	SizeVectorIt i;
-	for (i = this->dimensions.begin(); i != this->dimensions.end(); i++) {
-		this->tilecount *= *i;
+	for (int i = 0; i < L; ++i) {
+		this->tilecount *= dimensions[i];
 	}
 
 	/* create a tile list */
@@ -141,7 +153,8 @@ void Game::inittiles(int mines) {
  * inittiles() helpers
  */
 
-void Game::deploythemines(int mines) {
+template<unsigned L>
+void Game<L>::deploythemines(int mines) {
 	std::vector<unsigned int> minelist;
 	std::vector<unsigned int>::iterator minelistit, minelistit2;
 	minelist.reserve(mines);
@@ -165,7 +178,8 @@ void Game::deploythemines(int mines) {
 	}
 }
 
-void Game::filltheblanks() {
+template<unsigned L>
+void Game<L>::filltheblanks() {
 	PTileVectorIt j;
 	for (j = this->tiles.begin(); j != this->tiles.end(); ++j) {
 		assert(*j == NULL);
@@ -173,7 +187,8 @@ void Game::filltheblanks() {
 	}
 }
 
-bool Game::pressblanks(Dimension dim, CoordinateSet basis) {
+template<unsigned L>
+bool Game<L>::pressblanks(Dimension dim, typename CoordinateSet<L>::Type basis) {
 	if (dim >= this->dimensioncount) {
 		Tile *tile = this->getTile(basis);
 		if (tile->getSurroundings() == 0 && !tile->amIDeadNow()) {
@@ -184,14 +199,15 @@ bool Game::pressblanks(Dimension dim, CoordinateSet basis) {
 	}
 	bool result = false;
 	for (unsigned int x = 0; x < this->dimensions[dim]; ++x) {
-		CoordinateSet temp = basis;
+		typename CoordinateSet<L>::Type temp = basis;
 		temp[dim] = x;
 		if (this->pressblanks(dim+1, temp)) result = true;
 	}
 	return result;
 }
 
-void Game::pressrandom() {
+template<unsigned L>
+void Game<L>::pressrandom() {
 	int range = this->getTileCount()-this->totalMines();
 	if (range <= 0) return; // whoops
 	int r = rand() % range;
@@ -206,54 +222,52 @@ void Game::pressrandom() {
  * Coordinate conversion
  */
 
-unsigned int Game::coordstofieldindex(CoordinateSet pos) {
+template<unsigned L>
+unsigned int Game<L>::coordstofieldindex(typename CoordinateSet<L>::Type pos) {
 	unsigned int idx = 0;
-	SizeVectorIt i;
-	CoordinateSetIt j;
-	for (i = this->dimensions.begin(), j = pos.begin();
-		i != this->dimensions.end() && j != pos.end();
-		++i, ++j) {
-		assert(*j < *i);
-		idx *= *i;
-		idx += *j;
+	for (int i = 0; i < L; ++i) {
+		assert(pos[i] < dimensions[i]);
+		idx *= dimensions[i];
+		idx += pos[i];
 	}
 	return idx;
 }
 
-CoordinateSet Game::fieldindextocoords(unsigned int idx) {
-	SizeVectorIt i, j;
-	CoordinateSet result = this->origo();
+template<unsigned L>
+typename CoordinateSet<L>::Type Game<L>::fieldindextocoords(unsigned int idx) {
+	typename CoordinateSet<L>::Type result;
 	Dimension dim;
-	unsigned int coord;
-	for (i = this->dimensions.begin(), dim = 0; i != this->dimensions.end(); ++i, ++dim) {
-		j = i;
-		coord = idx;
-		for (++j; j != this->dimensions.end(); ++j) {
-			coord /= *j;
+	for (Dimension dim = 0; dim < L; ++dim) {
+		Coordinate coord = idx;
+		for (int j = dim+1; j < L; ++j) {
+			coord /= dimensions[j];
 		}
-		coord %= *i; // size of current dimension
+		coord %= dimensions[dim]; // size of current dimension
 		result[dim] = coord;
 	}
 	return result;
 }
 
-int Game::getOutputHeight() {
-	CoordinateSet p = dimensions;
+template<unsigned L>
+int Game<L>::getOutputHeight() {
+	typename CoordinateSet<L>::Type p = dimensions;
 	for (Dimension d = 0; d < dimensioncount; ++d) {
 		--p[d];
 	}
 	return getOutputRow(p)+1;
 }
 
-int Game::getOutputWidth() {
-	CoordinateSet p = dimensions;
+template<unsigned L>
+int Game<L>::getOutputWidth() {
+	typename CoordinateSet<L>::Type p = dimensions;
 	for (Dimension d = 0; d < dimensioncount; ++d) {
 		--p[d];
 	}
 	return getOutputColumn(p)+1;
 }
 
-int Game::getOutputColumn(CoordinateSet p) {
+template<unsigned L>
+int Game<L>::getOutputColumn(typename CoordinateSet<L>::Type p) {
 	int factor = 1;
 	int sum = 0;
 	Dimension d = dimensioncount-1;
@@ -267,7 +281,8 @@ int Game::getOutputColumn(CoordinateSet p) {
 	return sum;
 }
 
-int Game::getOutputRow(CoordinateSet p) {
+template<unsigned L>
+int Game<L>::getOutputRow(typename CoordinateSet<L>::Type p) {
 	int factor = 1;
 	int sum = 0;
 	Dimension d = dimensioncount-2;
@@ -284,20 +299,22 @@ int Game::getOutputRow(CoordinateSet p) {
 /**
  * Get the neighbourhood of a tile. Used by PlayerRobot.
  */
-CoordinateSetList Game::neighbourhoodpositions(CoordinateSet pos, bool includeself /*= false*/) {
-	CoordinateSetList result;
+template<unsigned L>
+typename CoordinateSet<L>::List Game<L>::neighbourhoodpositions(typename CoordinateSet<L>::Type pos, bool includeself /*= false*/) {
+	typename CoordinateSet<L>::List result;
 	this->_neighbourhoodpositions(0, pos, includeself, &result);
 	return result;
 }
 
-void Game::_neighbourhoodpositions(Dimension dim,
-                                   CoordinateSet basis,
+template<unsigned L>
+void Game<L>::_neighbourhoodpositions(Dimension dim,
+                                   typename CoordinateSet<L>::Type basis,
                                    bool includebasis,
-                                   CoordinateSetList *list) {
+                                   typename CoordinateSet<L>::List *list) {
 	if (dim == this->dimensioncount) {
 		if (includebasis) list->push_back(basis);
 	} else {
-		CoordinateSet temp;
+		typename CoordinateSet<L>::Type temp;
 		if (basis[dim]) {
 			temp = basis;
 			--temp[dim];
@@ -312,10 +329,11 @@ void Game::_neighbourhoodpositions(Dimension dim,
 	}
 }
 
-PTileSet Game::neighbourhood(CoordinateSet pos, bool includeself /*= false*/) {
+template<unsigned L>
+PTileSet Game<L>::neighbourhood(typename CoordinateSet<L>::Type pos, bool includeself /*= false*/) {
 	PTileSet result;
-	CoordinateSetList neighbours = this->neighbourhoodpositions(pos, includeself);
-	CoordinateSetListIt i;
+	typename CoordinateSet<L>::List neighbours = this->neighbourhoodpositions(pos, includeself);
+	typename CoordinateSet<L>::ListIt i;
 	for (i = neighbours.begin(); i != neighbours.end(); ++i) {
 		Tile *tile = this->getTile(*i);
 		if (tile != NULL) result.insert(tile);
@@ -330,7 +348,8 @@ PTileSet Game::neighbourhood(CoordinateSet pos, bool includeself /*= false*/) {
 /**
  * Press a tile. Returns true if the pressed tile was a bomb. Oops!
  */
-bool Game::amIDeadNow(CoordinateSet pos) {
+template<unsigned L>
+bool Game<L>::amIDeadNow(typename CoordinateSet<L>::Type pos) {
 	Tile *tile = this->getTile(pos);
 	if (tile == NULL) return false;
 	if (tile->getDepressed()) return false;
@@ -350,14 +369,15 @@ bool Game::amIDeadNow(CoordinateSet pos) {
  * not a bomb and doesn't have any bomb neighbours, press all tiles in its
  * neighbourhood.
  */
-void Game::press(CoordinateSet pos, bool norecursivespread) {
+template<unsigned L>
+void Game<L>::press(typename CoordinateSet<L>::Type pos, bool norecursivespread) {
 	Tile *tile = this->getTile(pos);
 	tile->press();
 	++this->pressedcount;
 	drawtile(pos);
 	if (!tile->amIDeadNow() && (tile->getSurroundings() == 0)) {
-		CoordinateSetList neighbours = this->neighbourhoodpositions(pos);
-		CoordinateSetListIt i;
+		typename CoordinateSet<L>::List neighbours = this->neighbourhoodpositions(pos);
+		typename CoordinateSet<L>::ListIt i;
 		for (i = neighbours.begin(); i != neighbours.end(); ++i) {
 			if (norecursivespread && this->getTile(*i)->getSurroundings() == 0) continue;
 			this->amIDeadNow(*i);
@@ -369,7 +389,8 @@ void Game::press(CoordinateSet pos, bool norecursivespread) {
  * Toggle flag on for a tile. Used to mark that the player believes the tile
  * contains a bomb.
  */
-bool Game::flagon(CoordinateSet pos) {
+template<unsigned L>
+bool Game<L>::flagon(typename CoordinateSet<L>::Type pos) {
 	Tile *tile = this->getTile(pos);
 	bool alreadyflag = FLAG_ON(tile->getFlag());
 	tile->setFlag(true);
@@ -384,7 +405,8 @@ bool Game::flagon(CoordinateSet pos) {
 /**
  * Toggle flag off for a tile.
  */
-bool Game::flagoff(CoordinateSet pos) {
+template<unsigned L>
+bool Game<L>::flagoff(typename CoordinateSet<L>::Type pos) {
 	Tile *tile = this->getTile(pos);
 	bool alreadyflag = FLAG_ON(tile->getFlag());
 	tile->setFlag(false);
@@ -400,11 +422,12 @@ bool Game::flagoff(CoordinateSet pos) {
 /**
  * Output the whole thing
  */
-void Game::output() {
+template<unsigned L>
+void Game<L>::output() {
 	TIMERON;
 	immedok(window, false);
 	werase(window);
-	for (CoordinateSetList::const_iterator i = coordbegin(); i != coordend(); ++i) {
+	for (typename CoordinateSet<L>::List::const_iterator i = coordbegin(); i != coordend(); ++i) {
 		drawtile(*i);
 	}
 	drawborders();
@@ -416,7 +439,8 @@ void Game::output() {
 /**
  * Output just a single tile
  */
-void Game::drawtile(CoordinateSet p) {
+template<unsigned L>
+void Game<L>::drawtile(typename CoordinateSet<L>::Type p) {
 	Tile *t = getTile(p);
 	chtype output = t->output();
 	wmove(window, getOutputRow(p), getOutputColumn(p));
@@ -426,14 +450,16 @@ void Game::drawtile(CoordinateSet p) {
 /**
  * Draw borders
  */
-void Game::drawborders() {
+template<unsigned L>
+void Game<L>::drawborders() {
 	if (dimensioncount <= 2) return;
 	int x = 0, y = 0, w = getOutputWidth(), h = getOutputHeight();
 	drawhorzborders(&x, w, dimensioncount % 2);
 	drawvertborders(&y, h, 1 - dimensioncount % 2);
 }
 
-void Game::drawhorzborders(int *y, int w, Dimension d) {
+template<unsigned L>
+void Game<L>::drawhorzborders(int *y, int w, Dimension d) {
 	if (d >= dimensioncount-2) {
 		*y += dimensions[d];
 	} else {
@@ -448,7 +474,8 @@ void Game::drawhorzborders(int *y, int w, Dimension d) {
 	}
 }
 
-void Game::drawvertborders(int *x, int h, Dimension d) {
+template<unsigned L>
+void Game<L>::drawvertborders(int *x, int h, Dimension d) {
 	if (d >= dimensioncount-2) {
 		*x += dimensions[d];
 	} else {

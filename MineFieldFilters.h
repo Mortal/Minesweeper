@@ -3,17 +3,19 @@
 
 #include "types.h"
 
+template<unsigned L>
 class MineFieldFilter {
 public:
 	virtual ~MineFieldFilter() {};
-	virtual bool filter_cb(CoordinateSet, class Game *) = 0;
-	CoordinateSetList filter(CoordinateSetList, class Game *);
+	virtual bool filter_cb(CoordinateSet<L>::Type, class Game<L> *) = 0;
+	CoordinateSetList filter(CoordinateSet<L>::List, class Game<L> *);
 };
 
+template<unsigned L>
 class MineFieldFilterBombNeighbours: public MineFieldFilter {
 public:
 	virtual ~MineFieldFilterBombNeighbours() {};
-	virtual bool filter_cb(CoordinateSet coords, class Game *field);
+	virtual bool filter_cb(CoordinateSet<L>::Type coords, class Game<L> *field);
 };
 
 class MineFieldFilterUnpressed: public MineFieldFilter {

@@ -8,15 +8,8 @@
 
 typedef std::vector<class Tile*> PTileVector;
 typedef PTileVector::iterator PTileVectorIt;
-typedef std::vector<unsigned int> SizeVector;
-typedef SizeVector::iterator SizeVectorIt;
 typedef std::set<class Tile*> PTileSet;
 typedef PTileSet::iterator PTileSetIt;
-typedef unsigned int Coordinate;
-typedef std::vector<Coordinate> CoordinateSet;
-typedef CoordinateSet::iterator CoordinateSetIt;
-typedef std::list<CoordinateSet> CoordinateSetList;
-typedef CoordinateSetList::iterator CoordinateSetListIt;
 typedef std::list<class Move*> MoveList;
 typedef MoveList::iterator MoveListIt;
 typedef unsigned int Dimension;

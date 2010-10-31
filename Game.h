@@ -2,6 +2,7 @@
 #define MINEFIELD_H
 
 #include "types.h"
+#include "Vector.hpp"
 #include "Tile.h"
 #include <ostream>
 #include <ncurses.h>
@@ -13,9 +14,10 @@ enum GameState {
 	GAMESTATE_LOSE
 };
 
+template<unsigned L>
 class Game {
 public:
-	Game(Dimension dimensioncount, SizeVector dimensions, class NullTimer *timer);
+	Game(typename SizeVector<L>::Type dimensions, class NullTimer *timer);
 	void startgame(int mines);
 	void setBombField(WINDOW *w);
 
@@ -23,47 +25,47 @@ public:
 	GameState getState();
 	unsigned int totalMines();
 	unsigned int totalFlags();
-	CoordinateSet origo();
-	Tile *getTile(CoordinateSet pos);
+	typename CoordinateSet<L>::Type origo();
+	Tile *getTile(typename CoordinateSet<L>::Type pos);
 	Dimension getDimensioncount() {return this->dimensioncount;}
 	unsigned int getPressedCount() {return this->pressedcount;}
 	unsigned int getTileCount() {return this->tilecount;}
 
 	// Iterators
-	CoordinateSetList::const_iterator coordbegin();
-	CoordinateSetList::const_iterator coordend();
+	typename CoordinateSet<L>::List::const_iterator coordbegin();
+	typename CoordinateSet<L>::List::const_iterator coordend();
 	PTileVector::const_iterator tilebegin();
 	PTileVector::const_iterator tileend();
 
 	// Coordinate conversion
 	int getOutputWidth();
 	int getOutputHeight();
-	int getOutputColumn(CoordinateSet p);
-	int getOutputRow(CoordinateSet p);
+	int getOutputColumn(typename CoordinateSet<L>::Type p);
+	int getOutputRow(typename CoordinateSet<L>::Type p);
 
 	// used by PlayerRobot
-	CoordinateSetList neighbourhoodpositions(CoordinateSet pos, bool includeself = false);
-	PTileSet neighbourhood(CoordinateSet pos, bool includeself = false);
+	typename CoordinateSet<L>::List neighbourhoodpositions(typename CoordinateSet<L>::Type pos, bool includeself = false);
+	PTileSet neighbourhood(typename CoordinateSet<L>::Type pos, bool includeself = false);
 
 	// Player interface (called by subclasses of Move)
-	bool amIDeadNow(CoordinateSet pos);
-	bool flagon(CoordinateSet pos);
-	bool flagoff(CoordinateSet pos);
+	bool amIDeadNow(typename CoordinateSet<L>::Type pos);
+	bool flagon(typename CoordinateSet<L>::Type pos);
+	bool flagoff(typename CoordinateSet<L>::Type pos);
 
 	// Drawing
 	void output();
-	void drawtile(CoordinateSet p);
+	void drawtile(typename CoordinateSet<L>::Type p);
 
 private:
 	NullTimer *timer;
 
-	SizeVector dimensions;
+	typename SizeVector<L>::Type dimensions;
 	Dimension dimensioncount;
 
 	PTileVector tiles;
 	unsigned int tilecount;
 
-	CoordinateSetList allpositionslist;
+	typename CoordinateSet<L>::List allpositionslist;
 	bool allpositions_initialised;
 
 	unsigned int minecount;
@@ -74,26 +76,26 @@ private:
 	WINDOW *window;
 
 	// coordbegin and coordend helpers
-	CoordinateSetList allpositions();
-	void _allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list);
+	typename CoordinateSet<L>::List allpositions();
+	void _allpositions(Dimension dim, typename CoordinateSet<L>::Type basis, typename CoordinateSet<L>::List *list);
 
 	// tile initialisation
 	void inittiles(int mines);
 	void deploythemines(int);
 	void filltheblanks();
-	bool pressblanks(Dimension dim, CoordinateSet basis);
+	bool pressblanks(Dimension dim, typename CoordinateSet<L>::Type basis);
 	void pressrandom();
 
 	// Coordinate conversion
-	unsigned int coordstofieldindex(CoordinateSet pos);
-	CoordinateSet fieldindextocoords(unsigned int idx);
+	unsigned int coordstofieldindex(typename CoordinateSet<L>::Type pos);
+	typename CoordinateSet<L>::Type fieldindextocoords(unsigned int idx);
 
 	// used by PlayerRobot
-	void _neighbourhoodpositions(Dimension dim, CoordinateSet basis,
-		bool includebasis, CoordinateSetList *list);
+	void _neighbourhoodpositions(Dimension dim, typename CoordinateSet<L>::Type basis,
+		bool includebasis, typename CoordinateSet<L>::List *list);
 
 	// amIDeadNow helper
-	void press(CoordinateSet pos, bool norecursivespread = false);
+	void press(typename CoordinateSet<L>::Type pos, bool norecursivespread = false);
 
 	// Drawing
 	void drawborders();
