@@ -52,4 +52,7 @@ template<unsigned L>
 struct SizeVector {
 	typedef Vector<unsigned int, L> Type;
 };
+
+#define CoordinateSetL typename CoordinateSet<L>::Type
+#define CoordinateSetLList typename CoordinateSet<L>::List
 #endif
