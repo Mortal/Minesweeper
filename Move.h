@@ -2,50 +2,57 @@
 #define MOVE_H
 #include <vector>
 #include <string>
-#include "types.h"
 #include "Game.h"
+#include "types.h"
+#include "Vector.hpp"
 
+template<unsigned L>
 class Move {
 	public:
-		virtual ~Move() {};
-		virtual void act(Game *field) = 0;
+		virtual ~Move<L>() {};
+		virtual void act(Game<L> *field) = 0;
 };
 
-class GiveUpMove : public Move {
+template<unsigned L>
+class GiveUpMove : public Move<L> {
 	public:
-		virtual ~GiveUpMove() {};
-		virtual void act(Game *field) {};
+		virtual ~GiveUpMove<L>() {};
+		virtual void act(Game<L> *field) {};
 };
 
-class TileMove : public Move {
+template<unsigned L>
+class TileMove : public Move<L> {
 	public:
-		virtual ~TileMove() {};
-		CoordinateSet getPoint();
+		virtual ~TileMove<L>() {};
+		CoordinateSetL getPoint();
 	protected:
-		TileMove(CoordinateSet p);
+		TileMove(CoordinateSetL p);
 	private:
-		CoordinateSet point;
+		CoordinateSetL point;
 };
 
-class FlagOnMove : public TileMove {
+template<unsigned L>
+class FlagOnMove : public TileMove<L> {
 	public:
-		FlagOnMove(CoordinateSet p);
-		virtual ~FlagOnMove() {};
-		virtual void act(Game *field);
+		FlagOnMove(CoordinateSetL p);
+		virtual ~FlagOnMove<L>() {};
+		virtual void act(Game<L> *field);
 };
 
-class FlagOffMove : public TileMove {
+template<unsigned L>
+class FlagOffMove : public TileMove<L> {
 	public:
-		FlagOffMove(CoordinateSet p);
-		virtual ~FlagOffMove() {};
-		virtual void act(Game *field);
+		FlagOffMove(CoordinateSetL p);
+		virtual ~FlagOffMove<L>() {};
+		virtual void act(Game<L> *field);
 };
 
-class PressMove : public TileMove {
+template<unsigned L>
+class PressMove : public TileMove<L> {
 	public:
-		PressMove(CoordinateSet p);
-		virtual ~PressMove() {};
-		virtual void act(Game *field);
+		PressMove(CoordinateSetL p);
+		virtual ~PressMove<L>() {};
+		virtual void act(Game<L> *field);
 };
 
 #endif

@@ -10,8 +10,7 @@ typedef std::vector<class Tile*> PTileVector;
 typedef PTileVector::iterator PTileVectorIt;
 typedef std::set<class Tile*> PTileSet;
 typedef PTileSet::iterator PTileSetIt;
-typedef std::list<class Move*> MoveList;
-typedef MoveList::iterator MoveListIt;
+#define MoveLList std::list<Move<L>*>
 typedef unsigned int Dimension;
 typedef bool Flag;
 #define FLAG_ON(f) (f)

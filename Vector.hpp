@@ -2,6 +2,7 @@
 #define VECTOR_HPP
 
 #include <stdarg.h>
+#include <stack>
 #include "types.h"
 
 template <class T, unsigned L> class Vector {
@@ -46,6 +47,7 @@ template<unsigned L>
 struct CoordinateSet {
 	typedef Vector<Coordinate, L> Type;
 	typedef std::list<Type> List;
+	typedef std::stack<Type> Stack;
 };
 
 template<unsigned L>
@@ -55,4 +57,5 @@ struct SizeVector {
 
 #define CoordinateSetL typename CoordinateSet<L>::Type
 #define CoordinateSetLList typename CoordinateSet<L>::List
+#define CoordinateSetLStack typename CoordinateSet<L>::Stack
 #endif

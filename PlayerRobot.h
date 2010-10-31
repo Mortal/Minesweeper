@@ -3,29 +3,32 @@
 #include "Player.h"
 #include <string>
 #include "types.h"
+#include "Vector.hpp"
 #include "Timer.h"
+#include "Tick.h"
 #include <fstream>
 #include <stack>
-typedef std::stack<CoordinateSet> CoordinateSetStack;
-class PlayerRobot: public Player {
+
+template<unsigned L>
+class PlayerRobot: public Player<L> {
 public:
-	PlayerRobot(Game *field, std::ostream *console, ProgramOptions opts, NullTimer *timer = NULL);
-	virtual ~PlayerRobot() {};
-	virtual Tick *tick();
+	PlayerRobot<L>(Game<L> *field, std::ostream *console, ProgramOptions opts, NullTimer *timer = NULL);
+	virtual ~PlayerRobot<L>() {};
+	virtual Tick<L> *tick();
 	void setTimer(NullTimer *timer);
 private:
 	NullTimer *timer;
-	Game *field;
+	Game<L> *field;
 
-	Tick *act_singleflagging(CoordinateSet tile, Tile *);
-	Tick *act_safespots(CoordinateSet tile, Tile *);
-	Tick *act_dualcheck(CoordinateSet tile, Tile *);
-	Tick *act_safemap(CoordinateSet tile, Tile *);
+	Tick<L> *act_singleflagging(CoordinateSetL tile, Tile *);
+	Tick<L> *act_safespots(CoordinateSetL tile, Tile *);
+	Tick<L> *act_dualcheck(CoordinateSetL tile, Tile *);
+	Tick<L> *act_safemap(CoordinateSetL tile, Tile *);
 
 	bool croaking;
 	void ncroak(std::string msg);
 	void croak(std::string msg);
-	void croak(std::string msg, CoordinateSet a, CoordinateSet b);
+	void croak(std::string msg, CoordinateSetL a, CoordinateSetL b);
 	void croakend();
 	void croakstatus();
 
@@ -33,9 +36,9 @@ private:
 	std::ostream *console;
 
 	bool allowcoordreset;
-	CoordinateSetList::const_iterator coord;
-	std::stack<CoordinateSet> coords;
-	CoordinateSet nextcoord();
+	CoordinateSetLList::const_iterator coord;
+	CoordinateSetLStack coords;
+	CoordinateSetL nextcoord();
 };
 
 class NoMoreCoordinatesException : public std::exception {

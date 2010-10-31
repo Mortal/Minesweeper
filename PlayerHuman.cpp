@@ -28,46 +28,50 @@ void trimstring(std::string *s) {
 	s->resize(i);
 }
 
-HumanCoordinateInput::HumanCoordinateInput(std::string input, Dimension dimensioncount) {
+template<unsigned L>
+HumanCoordinateInput<L>::HumanCoordinateInput(std::string input, Dimension dimensioncount) {
 	trimstring(&input);
 	std::list<std::string> coords = splitstring(input, ",");
 	this->_valid = false;
-	this->_coords = CoordinateSet(dimensioncount, 0);
+	this->_coords = CoordinateSet<L>(dimensioncount, 0);
 	if (coords.size() != dimensioncount) return;
-	CoordinateSet ret;
-	ret.reserve(dimensioncount);
+	CoordinateSet<L> ret;
 	std::list<std::string>::iterator i;
-	for (i = coords.begin(); i != coords.end(); ++i) {
+	int j;
+	for (i = coords.begin(), j = 0; i != coords.end(); ++i, ++j) {
 		int curcoord;
 		std::istringstream in(*i, std::istringstream::in);
 		in >> curcoord;
 		++curcoord;
-		ret.push_back(curcoord);
+		ret[j] = curcoord;
 	}
 	this->_valid = true;
 	this->_coords = ret;
 }
 
-PlayerHuman::PlayerHuman(Game *field, std::ostream *console) :
+template<unsigned L>
+PlayerHuman<L>::PlayerHuman(Game<L> *field, std::ostream *console) :
 field(field), console(console) {
 }
 
-Tick *PlayerHuman::tick() {
+template<unsigned L>
+Tick<L> *PlayerHuman<L>::tick() {
 	this->field->output();
 	std::string inputstring;
 	std::cin >> inputstring;
-	HumanCoordinateInput *input;
+	HumanCoordinateInput<L> *input;
 	while (1) {
-		input = new HumanCoordinateInput(inputstring, field->getDimensioncount());
+		input = new HumanCoordinateInput<L>(inputstring, field->getDimensioncount());
 		if (input->valid()) break;
 		delete input;
 	}
-	Tick *ret = new Tick("Press tile");
-	ret->addMove(new PressMove(input->get()));
+	Tick<L> *ret = new Tick<L>("Press tile");
+	ret->addMove(new PressMove<L>(input->get()));
 	return ret;
 }
 
-void PlayerHuman::dead() {
+template<unsigned L>
+void PlayerHuman<L>::dead() {
 	this->field->output();
 	std::cout << "A strange game. The only winning move is not to play. "
 		"Do you want your possessions identified? [ynq]" << std::endl;
