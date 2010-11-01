@@ -162,6 +162,22 @@ void Game::deploythemines(int mines) {
 			if (loc >= *minelistit) ++loc;
 		}
 		assert(loc < this->tilecount);
+		if (opts.noborderbombs) {
+			CoordinateSet c = fieldindextocoords(loc);
+			SizeVectorIt i;
+			CoordinateSetIt j;
+			bool border = false;
+			for (i = dimensions.begin(), j = c.begin(); i != dimensions.end() && j != c.end(); ++i, ++j) {
+				if (*j == 0 || *j+1 == *i) {
+					border = true;
+					break;
+				}
+			}
+			if (border) {
+				++mines;
+				continue;
+			}
+		}
 		minelist.push_back(loc);
 	}
 	for (minelistit = minelist.begin(); minelistit != minelist.end(); ++minelistit) {

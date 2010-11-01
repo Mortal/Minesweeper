@@ -68,6 +68,7 @@ void Minesweeper::initfields() {
 	opts.ai = true;
 	opts.waitonquit = true;
 	opts.reveal = REVEAL_ALLBLANKS;
+	opts.noborderbombs = false;
 #ifdef TIMING
 	opts.timer = new Timer;
 #else
@@ -107,6 +108,12 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 			opts.waitonquit = true;
 		} else if (*argi == "--no-wait") {
 			opts.waitonquit = false;
+		} else if (*argi == "-b") {
+			opts.noborderbombs = !opts.noborderbombs;
+		} else if (*argi == "--borderbombs") {
+			opts.noborderbombs = false;
+		} else if (*argi == "--no-borderbombs") {
+			opts.noborderbombs = true;
 		} else if (*argi == "-r" || *argi == "--repeat") {
 			opts.repeat = !opts.repeat;
 		} else if (*argi == "-f" || *argi == "--fullscreen") {

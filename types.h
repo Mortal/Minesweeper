@@ -41,6 +41,7 @@ struct ProgramOptions {
 	bool fullscreen;
 	class NullTimer *timer;
 	Reveal reveal;
+	bool noborderbombs;
 };
 
 #endif
