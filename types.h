@@ -42,6 +42,7 @@ struct ProgramOptions {
 	class NullTimer *timer;
 	Reveal reveal;
 	bool noborderbombs;
+	bool revealborders;
 };
 
 #endif

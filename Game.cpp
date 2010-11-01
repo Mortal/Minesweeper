@@ -144,6 +144,9 @@ void Game::inittiles(int mines) {
 				this->pressrandom();
 			}
 	}
+	if (opts.revealborders) {
+		this->pressborders();
+	}
 	this->state = GAMESTATE_PLAY;
 }
 
@@ -245,6 +248,27 @@ void Game::pressrandom() {
 	unsigned int tileindex;
 	for (i = this->tilebegin(), tileindex = 0; r && i != this->tileend(); ++i, ++tileindex) {
 		if (!(*i)->amIDeadNow() && !--r) this->amIDeadNow(this->fieldindextocoords(tileindex));
+	}
+}
+
+void Game::pressborders() {
+	CoordinateSetList::const_iterator i;
+	for (i = coordbegin(); i != coordend(); ++i) {
+		CoordinateSet c = *i;
+		CoordinateSetIt x;
+		SizeVectorIt s;
+		bool isborder = false;
+		for (x = c.begin(), s = dimensions.begin(); x != c.end() && s != dimensions.end(); ++x, ++s) {
+			if (*x == 0 || *x+1 == *s) {
+				isborder = true;
+				break;
+			}
+		}
+		if (isborder) {
+			Tile *tile = getTile(c);
+			if (!tile->amIDeadNow())
+				amIDeadNow(c);
+		}
 	}
 }
 

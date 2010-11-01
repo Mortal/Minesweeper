@@ -69,6 +69,7 @@ void Minesweeper::initfields() {
 	opts.waitonquit = true;
 	opts.reveal = REVEAL_ALLBLANKS;
 	opts.noborderbombs = false;
+	opts.revealborders = false;
 #ifdef TIMING
 	opts.timer = new Timer;
 #else
@@ -139,6 +140,8 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 				opts.reveal = REVEAL_ONEBLANK;
 			} else if (*argi == "allblanks") {
 				opts.reveal = REVEAL_ALLBLANKS;
+			} else if (*argi == "borders") {
+				opts.revealborders = true;
 			} else {
 				valid = false;
 			}

@@ -87,6 +87,7 @@ private:
 	CoordinateSetSet findblanks();
 	void findblanks(Dimension dim, CoordinateSet basis, CoordinateSetSet *result);
 	void pressrandom();
+	void pressborders();
 
 	// Coordinate conversion
 	unsigned int coordstofieldindex(CoordinateSet pos);
