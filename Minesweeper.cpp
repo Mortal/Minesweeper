@@ -67,6 +67,7 @@ void Minesweeper::initfields() {
 	opts.repeat = false;
 	opts.ai = true;
 	opts.waitonquit = true;
+	opts.reveal = REVEAL_ALLBLANKS;
 #ifdef TIMING
 	opts.timer = new Timer;
 #else
@@ -118,6 +119,26 @@ void Minesweeper::parseargs(int argc, char* argv[]) {
 			seedstream >> seed;
 			srand(seed);
 			gotseed = true;
+		} else if (*argi == "--reveal") {
+			++argi;
+			bool valid = true;
+			if (argi == args.end()) {
+				valid = false;
+			} else if (*argi == "none") {
+				opts.reveal = REVEAL_NONE;
+			} else if (*argi == "one") {
+				opts.reveal = REVEAL_ONE;
+			} else if (*argi == "oneblank") {
+				opts.reveal = REVEAL_ONEBLANK;
+			} else if (*argi == "allblanks") {
+				opts.reveal = REVEAL_ALLBLANKS;
+			} else {
+				valid = false;
+			}
+			if (!valid) {
+				*console << "--reveal <none|one|oneblank|allblanks>" << std::endl;
+				if (argi == args.end()) break;
+			}
 		} else {
 			unsigned int input;
 			std::stringstream numstream(*argi);
@@ -206,7 +227,7 @@ void Minesweeper::gameInit() {
 			calcMines();
 		}
 	}
-	field = new Game(size.size(), size, timer);
+	field = new Game(size.size(), size, timer, opts);
 	field->startgame(mines);
 	timer->endtime("Establishing gamefield");
 

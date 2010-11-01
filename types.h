@@ -17,12 +17,21 @@ typedef std::vector<Coordinate> CoordinateSet;
 typedef CoordinateSet::iterator CoordinateSetIt;
 typedef std::list<CoordinateSet> CoordinateSetList;
 typedef CoordinateSetList::iterator CoordinateSetListIt;
+typedef std::set<CoordinateSet> CoordinateSetSet;
+typedef CoordinateSetSet::iterator CoordinateSetSetIt;
 typedef std::list<class Move*> MoveList;
 typedef MoveList::iterator MoveListIt;
 typedef unsigned int Dimension;
 typedef bool Flag;
 #define FLAG_ON(f) (f)
 #define FLAG_OFF(f) (!f)
+
+enum Reveal {
+	REVEAL_NONE,
+	REVEAL_ONE,
+	REVEAL_ONEBLANK,
+	REVEAL_ALLBLANKS
+};
 
 struct ProgramOptions {
 	bool verbose;
@@ -31,6 +40,7 @@ struct ProgramOptions {
 	bool waitonquit;
 	bool fullscreen;
 	class NullTimer *timer;
+	Reveal reveal;
 };
 
 #endif

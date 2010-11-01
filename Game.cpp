@@ -9,10 +9,10 @@
 #include <ostream>
 #include <ncurses.h>
 
-Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer):
+Game::Game(Dimension dimensioncount, SizeVector dimensions, NullTimer *timer, ProgramOptions opts):
 	timer(timer), dimensions(dimensions), dimensioncount(dimensioncount),
 	allpositions_initialised(false), minecount(0), flagcount(0), pressedcount(0),
-	state(GAMESTATE_INIT), window(NULL) {
+	state(GAMESTATE_INIT), window(NULL), opts(opts) {
 
 	assert(dimensions.size() == dimensioncount);
 	assert(dimensioncount > 0);
@@ -128,12 +128,22 @@ void Game::inittiles(int mines) {
 	/* add mines */
 	if (mines) this->deploythemines(mines);
 
-	/* press all the tiles that don't have bomb neighbours */
-	if (!this->pressblanks(0, this->origo())) {
-		/* if there are no such bombs, press a random non-bomb tile */
-		this->pressrandom();
+	switch (opts.reveal) {
+		case REVEAL_NONE:
+			break;
+		case REVEAL_ONE:
+			pressrandom();
+			break;
+		case REVEAL_ONEBLANK:
+			if (!this->pressblanks(true)) {
+				this->pressrandom();
+			}
+			break;
+		case REVEAL_ALLBLANKS:
+			if (!this->pressblanks(false)) {
+				this->pressrandom();
+			}
 	}
-
 	this->state = GAMESTATE_PLAY;
 }
 
@@ -173,22 +183,42 @@ void Game::filltheblanks() {
 	}
 }
 
-bool Game::pressblanks(Dimension dim, CoordinateSet basis) {
+bool Game::pressblanks(bool one) {
+	CoordinateSetSet blanks = findblanks();
+	if (!blanks.size()) return false;
+	CoordinateSetSetIt i;
+	if (one) {
+		unsigned int count = blanks.size();
+		int idx = rand()%count;
+		for (i = blanks.begin(); idx-- && i != blanks.end(); ++i);
+		amIDeadNow(*i);
+	} else {
+		for (i = blanks.begin(); i != blanks.end(); ++i) {
+			amIDeadNow(*i);
+		}
+	}
+	return true;
+}
+
+CoordinateSetSet Game::findblanks() {
+	CoordinateSetSet res;
+	findblanks(0, origo(), &res);
+	return res;
+}
+
+void Game::findblanks(Dimension dim, CoordinateSet basis, CoordinateSetSet *result) {
 	if (dim >= this->dimensioncount) {
 		Tile *tile = this->getTile(basis);
 		if (tile->getSurroundings() == 0 && !tile->amIDeadNow()) {
-			this->press(basis, true);
-			return true;
+			result->insert(basis);
 		}
-		return false;
+		return;
 	}
-	bool result = false;
 	for (unsigned int x = 0; x < this->dimensions[dim]; ++x) {
 		CoordinateSet temp = basis;
 		temp[dim] = x;
-		if (this->pressblanks(dim+1, temp)) result = true;
+		findblanks(dim+1, temp, result);
 	}
-	return result;
 }
 
 void Game::pressrandom() {

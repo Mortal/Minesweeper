@@ -15,7 +15,7 @@ enum GameState {
 
 class Game {
 public:
-	Game(Dimension dimensioncount, SizeVector dimensions, class NullTimer *timer);
+	Game(Dimension dimensioncount, SizeVector dimensions, class NullTimer *timer, ProgramOptions);
 	void startgame(int mines);
 	void setBombField(WINDOW *w);
 
@@ -73,6 +73,8 @@ private:
 	GameState state;
 	WINDOW *window;
 
+	ProgramOptions opts;
+
 	// coordbegin and coordend helpers
 	CoordinateSetList allpositions();
 	void _allpositions(Dimension dim, CoordinateSet basis, CoordinateSetList *list);
@@ -81,7 +83,9 @@ private:
 	void inittiles(int mines);
 	void deploythemines(int);
 	void filltheblanks();
-	bool pressblanks(Dimension dim, CoordinateSet basis);
+	bool pressblanks(bool one);
+	CoordinateSetSet findblanks();
+	void findblanks(Dimension dim, CoordinateSet basis, CoordinateSetSet *result);
 	void pressrandom();
 
 	// Coordinate conversion
