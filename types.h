@@ -12,7 +12,7 @@ typedef std::vector<unsigned int> SizeVector;
 typedef SizeVector::iterator SizeVectorIt;
 typedef std::set<class Tile*> PTileSet;
 typedef PTileSet::iterator PTileSetIt;
-typedef unsigned int Coordinate;
+typedef unsigned short Coordinate;
 typedef std::vector<Coordinate> CoordinateSet;
 typedef CoordinateSet::iterator CoordinateSetIt;
 typedef std::list<CoordinateSet> CoordinateSetList;
@@ -21,7 +21,7 @@ typedef std::set<CoordinateSet> CoordinateSetSet;
 typedef CoordinateSetSet::iterator CoordinateSetSetIt;
 typedef std::list<class Move*> MoveList;
 typedef MoveList::iterator MoveListIt;
-typedef unsigned int Dimension;
+typedef unsigned short Dimension;
 typedef bool Flag;
 #define FLAG_ON(f) (f)
 #define FLAG_OFF(f) (!f)
